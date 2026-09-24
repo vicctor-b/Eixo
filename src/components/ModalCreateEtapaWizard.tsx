@@ -12,6 +12,7 @@ import {
 } from '@phosphor-icons/react';
 import { PRESET_TIPOS_OBRA } from '../data/presetObras';
 import { PresetEtapa, PresetTipoObra } from '../types/obra';
+import { getEtapaIcon } from '../utils/etapaIcons';
 
 interface ModalCreateEtapaWizardProps {
   isOpen: boolean;
@@ -170,10 +171,34 @@ export const ModalCreateEtapaWizard: React.FC<ModalCreateEtapaWizardProps> = ({
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Passo {currentStep} de 3
             </span>
-            <h2 className="modal-title" style={{ fontSize: '1.2rem', marginTop: 2 }}>
+            <h2 className="modal-title" style={{ fontSize: '1.2rem', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
               {currentStep === 1 && 'Tipo de Obra'}
               {currentStep === 2 && 'Escolha da Etapa'}
-              {currentStep === 3 && etapaNomeDisplay}
+              {currentStep === 3 && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  {(() => {
+                    const iconCfg = getEtapaIcon(etapaNomeDisplay);
+                    const StepIcon = iconCfg.Icon;
+                    return (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 28,
+                          height: 28,
+                          borderRadius: 'var(--radius-xs)',
+                          background: iconCfg.bg,
+                          color: iconCfg.color,
+                        }}
+                      >
+                        <StepIcon size={17} weight="bold" />
+                      </span>
+                    );
+                  })()}
+                  <span>{etapaNomeDisplay}</span>
+                </span>
+              )}
             </h2>
           </div>
           <button onClick={onClose} className="btn-icon" title="Fechar">
@@ -258,72 +283,142 @@ export const ModalCreateEtapaWizard: React.FC<ModalCreateEtapaWizardProps> = ({
             </div>
           )}
 
-          {/* PASSO 2: SELECIONAR ETAPA */}
+          {/* PASSO 2: SELECIONAR ETAPA COM ÍCONES */}
           {currentStep === 2 && (
             <div>
+              <div style={{ marginBottom: 12 }}>
+                <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                  Selecione uma etapa do catálogo ou crie uma personalizada:
+                </span>
+              </div>
+
               {!isTipoPersonalizado && selectedTipo && (
                 <div
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 8,
-                    maxHeight: '260px',
+                    maxHeight: '280px',
                     overflowY: 'auto',
                     paddingRight: 4,
                   }}
                 >
-                  {selectedTipo.etapas.map((etp) => (
-                    <div
-                      key={etp.id}
-                      onClick={() => handleSelectEtapa(etp)}
-                      style={{
-                        padding: '12px 14px',
-                        border: '1px solid var(--border-hairline)',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        background: selectedEtapa?.id === etp.id ? 'var(--dark-coffee-50)' : '#ffffff',
-                        borderColor: selectedEtapa?.id === etp.id ? 'var(--primary-accent)' : 'var(--border-hairline)',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-main)' }}>
-                          {etp.nome}
+                  {selectedTipo.etapas.map((etp) => {
+                    const iconCfg = getEtapaIcon(etp.nome, etp.id);
+                    const StepIcon = iconCfg.Icon;
+                    const isSelected = selectedEtapa?.id === etp.id;
+
+                    return (
+                      <div
+                        key={etp.id}
+                        onClick={() => handleSelectEtapa(etp)}
+                        style={{
+                          padding: '10px 14px',
+                          border: '1.5px solid var(--border-hairline)',
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: isSelected ? 'var(--dark-coffee-50)' : '#ffffff',
+                          borderColor: isSelected ? 'var(--primary-accent)' : 'var(--border-hairline)',
+                          transition: 'all 0.16s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = 'var(--border-strong)';
+                            e.currentTarget.style.background = 'var(--dark-coffee-50)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = 'var(--border-hairline)';
+                            e.currentTarget.style.background = '#ffffff';
+                          }
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 'var(--radius-sm)',
+                              background: iconCfg.bg,
+                              color: iconCfg.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                            }}
+                          >
+                            <StepIcon size={20} weight="bold" />
+                          </div>
+
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 700,
+                                fontSize: '0.92rem',
+                                color: 'var(--text-main)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {etp.nome}
+                            </div>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                              {etp.tarefas.length} serviços sugeridos
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                          {etp.tarefas.length} serviços
+
+                        <div
+                          style={{
+                            color: isSelected ? 'var(--primary-accent)' : 'var(--mauve-bark-400)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginLeft: 8,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <ArrowRight size={16} weight="bold" />
                         </div>
                       </div>
-                      <ArrowRight size={16} color="var(--primary-accent)" weight="bold" />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* Inserir Nome Customizado */}
-              <div style={{ marginTop: 14 }}>
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Ou digite o nome de outra etapa..."
-                    value={customEtapaNome}
-                    onChange={(e) => {
-                      setCustomEtapaNome(e.target.value);
-                      setIsCustomEtapa(true);
-                      setSelectedEtapa(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleIniciarEtapaCustom();
-                    }}
-                  />
+                  <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                    <div style={{ position: 'absolute', left: 12, color: 'var(--primary-accent)', display: 'flex', alignItems: 'center' }}>
+                      <Sparkle size={16} weight="bold" />
+                    </div>
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ paddingLeft: 36, fontSize: '0.88rem' }}
+                      placeholder="Ou digite o nome de outra etapa personalizada..."
+                      value={customEtapaNome}
+                      onChange={(e) => {
+                        setCustomEtapaNome(e.target.value);
+                        setIsCustomEtapa(true);
+                        setSelectedEtapa(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleIniciarEtapaCustom();
+                      }}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={handleIniciarEtapaCustom}
                     className="btn-primary"
-                    style={{ whiteSpace: 'nowrap' }}
+                    style={{ whiteSpace: 'nowrap', padding: '8px 16px', fontSize: '0.85rem' }}
                   >
                     <span>Continuar</span>
                   </button>

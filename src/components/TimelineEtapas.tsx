@@ -18,6 +18,7 @@ import { Obra, Etapa, Tarefa } from '../types/obra';
 import { ModalEditItem } from './ModalEditItem';
 import { ModalConfirm } from './ModalConfirm';
 import { ModalTaskDetails } from './ModalTaskDetails';
+import { getEtapaIcon } from '../utils/etapaIcons';
 
 interface TimelineEtapasProps {
   obra: Obra;
@@ -283,6 +284,8 @@ export const TimelineEtapas: React.FC<TimelineEtapasProps> = ({
             const concluidas = etapa.tarefas.filter((t) => t.concluida).length;
             const todasConcluidas = totalTarefas > 0 && concluidas === totalTarefas;
             const percEtapa = totalTarefas > 0 ? Math.round((concluidas / totalTarefas) * 100) : 0;
+            const etapaIconCfg = getEtapaIcon(etapa.nome, etapa.id);
+            const EtapaIcon = etapaIconCfg.Icon;
             const isDragging = draggedEtapaIndex === etapaIndex;
             const isDragOver = dragOverEtapaIndex === etapaIndex;
 
@@ -324,6 +327,22 @@ export const TimelineEtapas: React.FC<TimelineEtapasProps> = ({
                             <DotsSixVertical size={18} weight="bold" />
                           </div>
                         )}
+
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 'var(--radius-sm)',
+                            background: etapaIconCfg.bg,
+                            color: etapaIconCfg.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <EtapaIcon size={17} weight="bold" />
+                        </div>
 
                         <div style={{ minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
