@@ -65,15 +65,25 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div
           onClick={onBackToObras}
           className="brand-logo"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
         >
-          <div className="brand-icon-box">
-            <HardHat size={24} weight="fill" />
-          </div>
+          <img
+            src="/eixo-icon.jpg"
+            alt="Eixo"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              objectFit: 'cover',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+            }}
+          />
           <div>
-            <span style={{ fontSize: '1.05rem', fontWeight: 800 }}>Gestão de Obra</span>
-            <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Diário & Decisões
+            <span style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: '-0.02em', display: 'block', lineHeight: 1.1 }}>
+              Eixo
+            </span>
+            <span style={{ display: 'block', fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              Canteiro & Decisões
             </span>
           </div>
         </div>

@@ -45,9 +45,9 @@ export const ObraList: React.FC<ObraListProps> = ({
           <div className="hero-visual-overlay" />
           <div className="hero-visual-content">
             <span className="hero-tag">Gestão de Obras & Reformas</span>
-            <h1 className="hero-title">Diário de Obra</h1>
+            <h1 className="hero-title">Eixo</h1>
             <p className="hero-description">
-              Controle de cronogramas físicos, avanço de etapas e comprovação fotográfica diária.
+              Acompanhamento transparente de cronogramas, evidências de canteiro e decisões com assinatura bilateral.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {perfilAtivo !== 'cliente' && (
