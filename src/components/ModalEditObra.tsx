@@ -1,0 +1,176 @@
+import React, { useState, useEffect } from 'react';
+import { X, FloppyDisk, BuildingApartment, User, MapPin, CalendarBlank, WarningCircle } from '@phosphor-icons/react';
+import { Obra } from '../types/obra';
+
+interface ModalEditObraProps {
+  isOpen: boolean;
+  obra: Obra | null;
+  onClose: () => void;
+  onSave: (updatedData: {
+    nome: string;
+    cliente: string;
+    endereco: string;
+    dataPrevista: string;
+  }) => void;
+}
+
+export const ModalEditObra: React.FC<ModalEditObraProps> = ({
+  isOpen,
+  obra,
+  onClose,
+  onSave,
+}) => {
+  const [nome, setNome] = useState('');
+  const [cliente, setCliente] = useState('');
+  const [endereco, setEndereco] = useState('');
+  const [dataPrevista, setDataPrevista] = useState('');
+  const [erro, setErro] = useState('');
+
+  useEffect(() => {
+    if (obra) {
+      setNome(obra.nome);
+      setCliente(obra.cliente);
+      setEndereco(obra.endereco);
+      setDataPrevista(obra.dataPrevista || '');
+      setErro('');
+    }
+  }, [obra, isOpen]);
+
+  if (!isOpen || !obra) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nome.trim()) {
+      setErro('O nome da obra não pode ficar vazio.');
+      return;
+    }
+    if (!cliente.trim()) {
+      setErro('O nome do cliente não pode ficar vazio.');
+      return;
+    }
+
+    onSave({
+      nome: nome.trim(),
+      cliente: cliente.trim(),
+      endereco: endereco.trim() || 'Endereço não informado',
+      dataPrevista: dataPrevista || obra.dataPrevista,
+    });
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ background: 'var(--dark-coffee-100)', color: 'var(--dark-coffee-800)', padding: 8, borderRadius: 10 }}>
+              <BuildingApartment size={24} weight="fill" />
+            </div>
+            <div>
+              <h2 className="modal-title">Editar Dados da Obra</h2>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Atualize as informações principais da obra
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="btn-icon" title="Fechar">
+            <X size={20} weight="bold" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            {erro && (
+              <div
+                style={{
+                  background: 'var(--coral-glow-50)',
+                  border: '1.5px solid var(--coral-glow-400)',
+                  borderRadius: 10,
+                  padding: '10px 14px',
+                  color: 'var(--coral-glow-700)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  marginBottom: 16,
+                }}
+              >
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <WarningCircle size={17} weight="bold" />
+                  <span>{erro}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <BuildingApartment size={18} color="var(--primary-accent)" weight="bold" />
+                  Nome da Obra *
+                </span>
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <User size={18} color="var(--primary-accent)" weight="bold" />
+                  Cliente *
+                </span>
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                value={cliente}
+                onChange={(e) => setCliente(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <MapPin size={18} color="var(--primary-accent)" weight="bold" />
+                  Endereço
+                </span>
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                value={endereco}
+                onChange={(e) => setEndereco(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <CalendarBlank size={18} color="var(--primary-accent)" weight="bold" />
+                  Data Prevista de Término
+                </span>
+              </label>
+              <input
+                type="date"
+                className="form-input"
+                value={dataPrevista}
+                onChange={(e) => setDataPrevista(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" onClick={onClose} className="btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" className="btn-primary">
+              <FloppyDisk size={18} weight="bold" />
+              <span>Salvar Alterações</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
