@@ -49,8 +49,8 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 ### 3.2 Perfil Cliente (`perfilAtivo === 'cliente'`)
 - Modo de acompanhamento transparente (cronograma físico, anexos e projetos em **Read-Only**).
 - **Apenas Decisões e Aprovações com Interação Ativa**: A **única** seção onde o cliente tem permissão de acrescentar ou interagir ativamente é na aba **Decisões & Aprovações** (propor alterações, aprovar/assinar decisões e recusar propostas). Todo o restante da plataforma opera estritamente em modo de acompanhamento.
-- **Restrição de Criação/Exclusão Geral**: O cliente **não visualiza** botões de criar nova obra, adicionar anexos no diário, anexar projetos em PDF, gerar links externos de upload, nem ícones de lixeira para exclusão.
-- **Read-Only no Cronograma e Tarefas**: Checkboxes de serviços, botões de edição, drag and drop e botões de adicionar fotos/anotações nos detalhes da tarefa ficam integralmente ocultos/desabilitados.
+- **Restrição de Criação/Exclusão Geral**: O cliente **não visualiza** botões de criar nova obra, adicionar ou inserir etapas no cronograma (inclusive quando a obra ainda não possui etapas), adicionar serviços, adicionar anexos no diário, anexar projetos em PDF, gerar links externos de upload, nem ícones de lixeira para exclusão.
+- **Read-Only no Cronograma e Tarefas**: Checkboxes de serviços, botões de adição/edição de etapas e tarefas, drag and drop e botões de adicionar fotos/anotações nos detalhes da tarefa ficam integralmente ocultos/desabilitados.
 - **Acesso Completo às Evidências e Documentos**: Visualização irrestrita de fotos ampliadas, anotações do diário, datas de conclusão de cada serviço e download/visualização de projetos em PDF.
 
 ### 3.3 Compartilhamento e Sincronização
@@ -67,7 +67,7 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - A decisão fica em estado `pendente` (com selo e ícone `<Clock />`) até a contraparte analisar.
   - A contraparte possui ações imediatas de **Concordar e Assinar** ou **Recusar**.
   - Uma vez assinada pela contraparte, a decisão torna-se `aprovada` e exibe carimbo digital auditável com nome, perfil e data/hora exatos de ambas as assinaturas.
-- **Modal de Criação Minimalista**: Apenas título, descrição, campos financeiros dedicados de **Aditivo (R$)** (+ Acréscimo) e **Supressivo (R$)** (- Redução Contratual) e upload opcional de fotos de amostra, sem textos redundantes nem campo de categoria.
+- **Modal de Criação Minimalista**: Apenas título, descrição, campos financeiros dedicados de **Aditivo (R$)** (+ Acréscimo) e **Supressivo (R$)** (- Redução Contratual) — com suporte a preenchimento conjunto na mesma decisão para compensação direta (ex: troca de material com crédito e acréscimo simultâneos) — e upload opcional de fotos de amostra, sem textos redundantes nem campo de categoria.
 - **Remoção de Categorias**: O seletor de categorias foi removido da criação para desburocratizar o registro de decisões pelo usuário.
 - **Central de Notificações**: Sininho com contador em tempo real no topo informando decisões pendentes da assinatura do perfil logado, com dropdown para navegação direta.
 
@@ -167,11 +167,17 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 
 ---
 
-## 11. Relatório de Conclusão da Obra e Futura Autenticação (Login)
+## 11. Relatórios Técnicos (Conclusão vs Medição Parcial) & Status Padronizados
 
-- **Relatório de Conclusão (Dossiê Integral)**:
-  - Disponível após o encerramento da obra através do botão `[ Relatório de Conclusão ]` no topo da página.
-  - Anexo integral obrigatório: consolidação direta de todo o histórico da obra (cronograma físico cumprido, diário fotográfico com observações, decisões aprovadas com carimbos digitais, projetos técnicos e termo de entrega).
+- **Modelo Dual de Emissão de Relatório**:
+  - **Relatório de Conclusão da Obra (100% Concluído)**: Dossiê executivo completo emitido quando todas as etapas e tarefas estiverem finalizadas. Contém o **Termo de Aceite Definitivo & Entrega de Chaves** formalizando a entrega física da obra.
+  - **Relatório de Evolução Física e Medição (<100%)**: Emitido a qualquer momento durante a execução para fins de medição periódica, avanço físico e prestação de contas. Contém o **Termo de Responsabilidade & Declaração de Pendências**, acompanhado de tabela oficial discriminando todas as atividades ainda em andamento ou pendentes.
+- **Padrão Oficial de 3 Status (Proibição Estrita de Vermelho para Pendente)**:
+  - **Concluído** (Verde `#15803d`, fundo `#dcfce7`, borda `#bbf7d0`): atividade finalizada com data/hora de conclusão.
+  - **Em andamento** (Âmbar `#b45309`, fundo `#fef3c7`, borda `#fde68a`): atividade iniciada e em execução no canteiro (com fotos/anotações anexadas ou status manual).
+  - **Pendente** (Cinza Neutro `#4b5563`, fundo `#f3f4f6`, borda `#e5e7eb`): atividade planejada para execução futura, evitando tons alarmistas de erro/vermelho e mantendo a sobriedade executiva da plataforma.
+- **Dossiê Integral Anexo**:
+  - Consolidação direta de todo o histórico: cronograma físico cumprido, diário fotográfico com observações de canteiro, decisões aprovadas com carimbos digitais bilaterais, projetos técnicos em PDF e termo de vistoria técnica.
   - Emissão e Entrega: **Baixar Relatório** (visualização executiva e impressão nativa A4 / Salvar como PDF via motor do navegador, 100% gratuita).
 - **Vinculação de Empresa/Empreiteiro e Transição para Login**:
   - A propriedade `empresaResponsavel` foi estruturada nativamente na interface `Obra` (`src/types/obra.ts`).
@@ -200,14 +206,15 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - **Mecânica de Aditivo e Supressivo**:
     - **Aditivo (+R$)**: acréscimo de escopo ou melhoria técnica que eleva o investimento final.
     - **Supressivo (-R$)**: exclusão de escopo, permuta de acabamentos por itens mais econômicos ou reajuste contratual para baixo, deduzindo diretamente do saldo do contrato.
+    - **Registro Conjunto**: capacidade de lançar na mesma decisão tanto o Aditivo quanto o Supressivo (ex: permuta onde se deduz o revestimento original e se acrescenta o novo padrão), calculando automaticamente o saldo líquido da decisão e somando corretamente cada componente nos painéis gerais.
   - Soma automática e auditável de todos os aditivos e supressivos aprovados bilateralmente (`status === 'aprovada'`).
   - Fórmula matemática consolidada: `Investimento Atualizado = Orçamento Base + Aditivos Aprovados + Supressivos Aprovados (negativo)`.
 - **Visualização em Pílulas e Cards**:
   - **Painel em `DecisoesTab`**: Grid executivo com indicadores dinâmicos: *Orçamento Contratual Base*, *Aditivos Aprovados*, *Supressivos Aprovados* (destaque em verde economia), *Investimento Atualizado* e *Propostas em Análise*.
-  - **Badges de Decisões**: Decisões com acréscimo exibem `Aditivo: +R$ X,XX`; decisões com dedução exibem `Supressivo: -R$ X,XX` em verde.
-  - **Notificação WhatsApp**: Mensagem gerada rotula explicitamente `(Aditivo)` ou `(Supressivo / Redução)`.
+  - **Badges de Decisões**: Decisões com acréscimo exibem `Aditivo: +R$ X,XX`; decisões com dedução exibem `Supressivo: -R$ X,XX` em verde; e decisões com ambos exibem os dois badges e o saldo líquido resultante.
+  - **Notificação WhatsApp**: Mensagem gerada rotula explicitamente `(Aditivo)`, `(Supressivo / Redução)` ou o detalhamento de ambos com saldo.
   - **Faixa de Metadados em `ObraHeader`**: Exibição compacta do orçamento base e do saldo líquido de alterações acumuladas.
-  - **Dossiê em `ModalPreviewRelatorio`**: Registro formal do orçamento base, aditivos aprovados, supressões aprovadas e investimento final nos metadados, KPIs e no Capítulo 3 do relatório impresso/PDF.
+  - **Dossiê em `ModalPreviewRelatorio`**: Registro formal do orçamento base, aditivos aprovados, supressões aprovadas e investimento final nos metadados, KPIs e no Capítulo 3 e 4 do relatório impresso/PDF.
 
 ---
 
