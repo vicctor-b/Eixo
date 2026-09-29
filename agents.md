@@ -54,8 +54,9 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 - **Acesso Completo às Evidências e Documentos**: Visualização irrestrita de fotos ampliadas, anotações do diário, datas de conclusão de cada serviço e download/visualização de projetos em PDF.
 
 ### 3.3 Compartilhamento e Sincronização
-- Parâmetros de URL sincronizados automaticamente (`?perfil=cliente&obra=ID_DA_OBRA`).
-- Aba dedicada no corpo da obra (**Link do Cliente**) com botão de cópia rápida e resumo claro de permissões.
+- Parâmetros de URL sincronizados automaticamente em tempo real (`?obra=ID_DA_OBRA&tab=ABA_ATIVA&perfil=PERFIL`), garantindo que ao atualizar a página (F5) o usuário nunca perca o contexto da obra aberta.
+- Suporte à navegação nativa do navegador (botões Voltar/Avançar via evento `popstate`).
+- Aba dedicada no corpo da obra (**Compartilhar**) com botão de cópia rápida e resumo claro de permissões.
 
 ---
 
@@ -80,10 +81,10 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
    - O botão "Nova Obra" foi removido do header e vive apenas na listagem de obras do construtor.
 2. **Seta de Voltar no Corpo**:
    - O botão `[ ← Todas as Obras ]` fica dentro do corpo de `ObraDetail`, totalmente desacoplado da barra superior.
-3. **Link do Cliente como Aba**:
-   - O compartilhamento com o cliente foi integrado como a 5ª aba da obra (ordem oficial: `Etapas & Cronograma`, `Projetos (PDF)`, `Decisões & Aprovações`, `Anexos & Diário`, `Link do Cliente`).
-4. **Navegação Cruzada (Anexos $\rightarrow$ Cronograma)**:
-   - Clicar nos detalhes de uma anotação ou serviço na aba de Anexos navega instantaneamente para a aba de etapas.
+3. **Aba Compartilhar**:
+   - O compartilhamento com o cliente foi integrado como a 5ª aba da obra (ordem oficial: `Etapas`, `Arquivos`, `Decisões`, `Diário`, `Compartilhar`).
+4. **Navegação Cruzada (Diário $\rightarrow$ Etapas)**:
+   - Clicar nos detalhes de uma anotação ou serviço no Diário navega instantaneamente para a aba de Etapas.
    - O accordion da etapa é expandido automaticamente caso esteja fechado.
    - O cronograma rola suavemente até centralizar a tarefa na tela.
    - A tarefa recebe destaque pulsante temporário (`.task-highlight-pulse`).
@@ -170,8 +171,8 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 ## 11. Relatórios Técnicos (Conclusão vs Medição Parcial) & Status Padronizados
 
 - **Modelo Dual de Emissão de Relatório**:
-  - **Relatório de Conclusão da Obra (100% Concluído)**: Dossiê executivo completo emitido quando todas as etapas e tarefas estiverem finalizadas. Contém o **Termo de Aceite Definitivo & Entrega de Chaves** formalizando a entrega física da obra.
-  - **Relatório de Evolução Física e Medição (<100%)**: Emitido a qualquer momento durante a execução para fins de medição periódica, avanço físico e prestação de contas. Contém o **Termo de Responsabilidade & Declaração de Pendências**, acompanhado de tabela oficial discriminando todas as atividades ainda em andamento ou pendentes.
+  - **Relatório de Conclusão da Obra (100% Concluído)**: Dossiê executivo completo emitido quando todas as etapas e tarefas estiverem finalizadas. Contém o **Termo de Aceite Definitivo & Entrega de Chaves** formalizando a entrega física da obra, acompanhado de campos de assinatura física do construtor responsável e do cliente/proprietário.
+  - **Relatório de Evolução Física e Medição (<100%)**: Emitido a qualquer momento durante a execução para fins de medição periódica, avanço físico e prestação de contas. Contém o **Termo de Responsabilidade & Declaração de Pendências**, acompanhado de tabela oficial discriminando todas as atividades ainda em andamento ou pendentes. **Os campos de assinatura física foram expressamente removidos deste relatório**, operando com autenticidade eletrônica nativa da plataforma Eixo com data de emissão.
 - **Padrão Oficial de 3 Status (Proibição Estrita de Vermelho para Pendente)**:
   - **Concluído** (Verde `#15803d`, fundo `#dcfce7`, borda `#bbf7d0`): atividade finalizada com data/hora de conclusão.
   - **Em andamento** (Âmbar `#b45309`, fundo `#fef3c7`, borda `#fde68a`): atividade iniciada e em execução no canteiro (com fotos/anotações anexadas ou status manual).
@@ -238,6 +239,62 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 - **Inclusão no Dossiê de Conclusão**:
   - Seção integrada no Capítulo 5 do Relatório de Conclusão (`ModalPreviewRelatorio`), servindo como termo de vistoria técnica e aceite de entrega de chaves.
 
+---
 
+## 16. Diário de Obra (Extrato Diário de Canteiro - "Extrato de Banco")
 
+- **Conceito & Filosofia**:
+  - Substituição da antiga aba "Anexos & Diário" pela aba exclusiva **"Diário de Obra"** (`DiarioObraTab`).
+  - Consolidação unificada de todas as movimentações importantes da obra (serviços concluídos, etapas finalizadas, propostas e aprovações de decisões bilaterais com aditivos/supressivos, evidências fotográficas, anotações de canteiro e itens de vistoria técnica validados).
+  - Apresentação em formato de **extrato de banco**, agrupando todos os eventos cronologicamente por dia (do mais recente ao mais antigo: `Hoje`, `Ontem`, seguido por datas anteriores formatadas com o dia da semana).
+- **Estrutura por Dia ("Extrato Bancário")**:
+  - **Cabeçalho Diário**: Data completa formatada, contador de eventos do dia e pílula de saldo financeiro do dia (se houver decisões com impacto monetário aprovadas ou propostas naquela data).
+  - **Linhas de Lançamento (Movimentações)**:
+    - Coluna de horário de registro (`HH:mm`).
+    - Container de ícone temático vetorizado (Phosphor Icons) categorizado por cor.
+    - Badge de categoria (`Etapa`, `Decisão`, `Evidência`, `Financeiro`).
+    - Título do evento em destaque e subtítulo contextual (ex: Etapa de origem, autor da proposta, status).
+    - Bloco de descrição e anotações técnicas quando houver.
+    - Miniaturas de fotos com clique para abertura de **Lightbox em Tela Cheia** (com suporte à tecla `Escape`).
+    - Badges de impacto financeiro (`+ R$ X,XX (Aditivo)` / `- R$ X,XX (Supressivo)`).
+    - Botões de navegação rápida: atalho para abrir os detalhes da tarefa no Cronograma ou atalho para navegar diretamente até a aba de Decisões.
+- **Cabeçalho Minimalista & Ausência de Contadores ("Menos é mais")**:
+  - Remoção de contadores e pílulas de indicadores no topo do diário, mantendo o cabeçalho estritamente limpo e executivo em linha única.
+  - Exibição de tag sutil de período ativo com botão de fechamento rápido (`✕`).
+- **Filtro de Período em Ícone Flutuante (Design System `ProjetosTab`)**:
+  - Eliminação de chips horizontais de categorias (`Todos`, `Serviços`, `Decisões`, etc.), desobstruindo a visualização do extrato.
+  - Filtro de período encapsulado em botão de ícone de funil (`<Funnel size={18} />`) de 38x38px com dot de destaque em `coral-glow` quando ativo.
+  - Popup flutuante com as opções `Todo o período`, `Hoje`, `Últimos 7 dias`, `Últimos 30 dias` e `Selecionar intervalo` (com inputs inline `De:` e `Até:`).
+- **Busca em Ícone com Popup Flutuante (Design System `ProjetosTab`)**:
+  - A barra de busca inline foi substituída por um botão de ícone de lupa (`<MagnifyingGlass size={18} />`) de 38x38px idêntico ao da aba Arquivos.
+  - Exibe indicador (*dot* em `coral-glow`) quando há termo pesquisado.
+  - Ao clicar, abre popup flutuante suspenso com campo de texto autofocado, ícone de limpeza (`✕`) e fechamento via clique fora ou tecla `Escape`.
+- **Permissões Rigorosas por Perfil**:
+  - **Construtor**: Visualização completa + botão `[ + Novo Registro ]` abrindo modal para lançar anotação técnica ou foto direcionada a um serviço específico de qualquer etapa ou como anotação geral de canteiro.
+  - **Cliente**: Modo 100% Read-Only de acompanhamento transparente (sem botões de inserção ou exclusão, permitindo inspecionar evidências, fotos em tela cheia e extrato completo).
+
+---
+
+## 17. Otimizações de Engenharia Web Wizard (Frontend Design, CRO & A11y)
+
+- **Cadastro de Obra em Tela Única (`ModalCreateObra`)**:
+  - Substituição do antigo assistente de 3 etapas com 1 campo por tela por um modal unificado, fluido e direto, eliminando o timer artificial de 250ms contra duplo toque no mobile.
+  - Permissão de data de entrega para a data atual (hoje em diante).
+- **Máscara Monetária em Tempo Real & Proibição de Letras (`src/utils/moeda.ts`)**:
+  - Implementação das funções `mascararMoedaInput(valor)` e `proibirNaoNumericosMoeda(e)` em todos os campos de entrada monetária (`ModalCreateObra`, `ModalEditObra` e campos de Aditivo e Supressivo em `ModalCreateDecisao`).
+  - Máscara dinâmica com deslocamento de centavos em tempo real durante a digitação (`onChange`), com formatação no padrão brasileiro (`pt-BR`) e separadores automáticos de milhar e centavos.
+  - Permite apagar completamente o campo com Backspace/Delete (retornando string vazia `""` para evitar engasgos em `"0,00"`).
+  - Bloqueio estrito de digitação de letras, pontuações e símbolos não numéricos via interceptação em `onKeyDown` (`proibirNaoNumericosMoeda`), preservando atalhos de sistema/clipboard (`Ctrl/Cmd + C, V, A, X, Z`) e navegação por setas.
+  - Teclado numérico invocado automaticamente no mobile com `inputMode="numeric"`.
+- **Acessibilidade Universal & Fechamento com `Escape`**:
+  - Implementação consistente de listeners da tecla `Escape` em todos os 11 modais e diálogos do sistema.
+  - Tratamento de precedência no `DatePickerInput` para que pressionar `Escape` feche apenas o popover de calendário sem fechar o modal pai.
+  - Alvos de toque expandidos para o padrão WCAG 2.5.5 (mínimo de 44px × 44px) em checkboxes de tarefas (`.task-checkbox::before`) e handles de arraste.
+  - Navegação por teclado completa com `tabIndex={0}`, `role="button"` e estilos de `:focus-visible` em linhas de obras e cabeçalhos sanfonados de etapas, com bloqueio estrito de propagação de eventos (`e.target !== e.currentTarget`).
+- **Code-Splitting & Otimização de Bundle**:
+  - Divisão de código com `React.lazy()` e `Suspense` em telas e modais volumosos (`ModalPreviewRelatorio`, `ConfigTemplatesPage`, `PublicUploadProjetoPage`).
+  - Importação dinâmica assíncrona do motor de celebração `canvas-confetti` apenas no ato de conclusão da etapa/tarefa.
+  - Redução expressiva do chunk inicial de 668 kB para 588 kB.
+- **Higienização de Código Morto**:
+  - Remoção definitiva de componentes órfãos descontinuados (`AnexosTab.tsx` e `ModalShareClient.tsx`).
 
