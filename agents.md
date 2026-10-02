@@ -329,21 +329,29 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 
 ## 19. Autenticação Frontend Mockada & Gerenciamento de Estado de Role
 
-- **Tela de Login Dedicada (`LoginPage.tsx`)**:
-  - Interface moderna e minimalista alinhada ao design system do Eixo (paleta terrosa, ícones Phosphor, zero emojis e zero alerts nativos).
-  - Inputs de **E-mail** e **Senha** com toggle de visibilidade de senha (ícones `<Eye />` e `<EyeSlash />`).
-  - Botão de submissão **Entrar** (`Submit`) e link **Esqueceu a senha?** com modal acessível de recuperação simulada.
-  - Seletor de Perfil de Acesso (`[ Construtor ]` / `[ Cliente ]`) e atalhos de acesso rápido para testes de desenvolvimento.
-- **Gerenciamento de Estado no Aplicativo (App State)**:
-  - Variáveis de estado locais:
-    - `isLogged` (Boolean): controla a exibição da tela de login vs. o aplicativo principal, persistido em `localStorage` (`eixo_auth_isLogged`).
-    - `Role` ('Construtor' | 'Cliente'): define a credencial ativa do usuário logado, persistido em `localStorage` (`eixo_auth_role`).
-  - Mapeamento transparente com o perfil ativo do sistema: `perfilAtivo = Role.toLowerCase() as PerfilUsuario`.
-  - Links compartilhados com cliente (`?perfil=cliente`) e upload público de pranchas (`?upload=projeto`) contornam a autenticação inicial mantendo o acesso seguro e direto do cliente.
-- **Simulação de Autenticação (Fake Login)**:
-  - Validação de preenchimento dos campos no submit (rejeita e-mail ou senha em branco com aviso no padrão visual do sistema).
-  - Ao aprovar, altera `isLogged` para `true`, define a `Role` selecionada, emite toast de boas-vindas e redireciona para a `Home`.
-  - Botão de logout (`<SignOut />`) integrado ao cabeçalho (`Navbar`) para fácil alternância e testes de perfis.
+- **Tela de Autenticação Completa com Login e Cadastro (`LoginPage.tsx`)**:
+  - Interface moderna, segura e minimalista alinhada ao design system do Eixo (paleta terrosa, ícones Phosphor, zero emojis e zero alerts nativos).
+  - **Alternador de Abas Superiores (Segmented Control)**:
+    - **Aba "Entrar"**:
+      - Seletor de Perfil (`[ Construtor ]` / `[ Cliente ]`).
+      - Campo **E-mail** com validação de formato e ícone `<EnvelopeSimple />`.
+      - Campo **Senha** com toggle de visibilidade de senha (ícones `<Eye />` e `<EyeSlash />`).
+      - Checkbox padrão **Lembrar de mim neste dispositivo**.
+      - Link **Esqueceu a senha?** com modal acessível de envio simulado de link de recuperação e listener de tecla `Escape`.
+      - Botão primário `Entrar como [Perfil]` e atalhos rápidos de demonstração com 1 clique (`Demo Construtor`, `Demo Cliente`).
+      - Link de rodapé para alternância direta: *"Ainda não possui uma conta? Cadastre-se gratuitamente"*.
+    - **Aba "Criar Conta" (Cadastro / Registro)**:
+      - Seletor de Tipo de Conta (`[ Construtor ]` / `[ Cliente ]`).
+      - Campo **Nome Completo** com ícone `<User />`.
+      - Campo **E-mail Profissional / Pessoal** com ícone `<EnvelopeSimple />`.
+      - Campo **Empresa / Construtora** (exibido condicionalmente para o perfil Construtor, com ícone `<Buildings />`).
+      - Campo **Criar Senha** (mínimo de 6 caracteres) com toggle de visibilidade.
+      - Campo **Confirmar Senha** com validação de correspondência e toggle de visibilidade.
+      - Checkbox de consentimento: *"Concordo com os Termos de Uso e Política de Privacidade do Eixo"*.
+      - Botão primário `Criar Conta e Acessar` e badge de segurança criptográfica com `<ShieldCheck />`.
+      - Link de rodapé para retorno ao login: *"Já possui uma conta cadastrada? Fazer Login"*.
+  - **Persistência de Dados Cadastrais**:
+    - Ao cadastrar-se, o sistema autentica diretamente e armazena os dados locais (`eixo_auth_isLogged = true`, `eixo_auth_role`, `eixo_auth_userName`, `eixo_auth_userEmail`, `eixo_empresa_cadastrada`), integrando-os de imediato ao cabeçalho, perfil do usuário e relatórios emitidos.
 - **Permissões Visuais e Renderização Condicional por Role**:
   - **`Role === 'Construtor'`**:
     - Acesso integral a menus de edição, criação de novas obras e gerenciamento de modelos de etapas (`ConfigTemplatesPage`).
@@ -464,9 +472,41 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - No mobile (`window.innerWidth <= 768`), todas as etapas iniciam **minimizadas/colapsadas por padrão**, reduzindo a rolagem vertical e permitindo ao usuário abrir pontualmente a etapa de interesse.
   - A versão desktop permanece com todas as etapas expandidas por padrão.
 
+### 22.11 Registro de Notas (Painel Exclusivo por Obra & Dossiê no Relatório Final)
+- **Substituição de Materiais**: O módulo antigo de materiais foi transformado em **"Registro de Notas"** (`ModalRegistroNota.tsx` e `RegistroNotasPage.tsx`).
+- **Navegação via Menu Lateral (`SandwichMenu.tsx`)**: O item "Registro de notas" navega diretamente para a **página dedicada `RegistroNotasPage`** (`?view=notas`), com sincronização de histórico e botão superior `[ ← Voltar para Obras ]`.
+- **Visão por Cards de Obra (`RegistroNotasPage.tsx`)**:
+  - Exibe um card individual para cada obra cadastrada, contendo identificação da obra, cliente, localização, badge de quantidade de notas e botão de ação rápida `+ Anexar Nota`.
+  - Galeria de notas anexadas por obra: visualização em grid das imagens de notas fiscais e recibos, títulos, datas de emissão e observações.
+  - Lightbox integrado para visualização de fotos em tela cheia com zoom, e exclusão de notas via `ModalConfirm`.
+- **Desacoplamento do Diário de Obra**: As notas cadastradas **não emitem nenhum lançamento no Diário de Canteiro**, mantendo o extrato diário 100% focado no avanço físico e técnico dos serviços.
+- **Vínculo Oficial ao Relatório Final (`ModalPreviewRelatorio.tsx`)**:
+  - O relatório executivo incorpora o **Capítulo 05: Registro de Notas e Comprovantes Fiscais**, consolidando o histórico fotográfico e descritivo de todas as notas fiscais e cupons vinculados à obra para fins de prestação de contas.
+  - Indicador numérico correspondente incorporado na régua de KPIs do cabeçalho oficial do relatório.
 
+### 22.12 Registro de Notas - Cards de Obra Minimizados no Mobile (Accordion) & Cabeçalho Otimizado
+- **Accordion Exclusivo no Mobile (`.registro-notas-card-mobile`)**:
+  - Na versão mobile (`window.innerWidth <= 768px`), os cards de cada obra no Registro de Notas operam como accordion **minimizados por padrão**.
+  - **Estado Minimizado**: Exibe exclusivamente o nome da obra, cliente, localização, badge de quantidade de notas anexadas, botão de ação rápida `+ Nota` e chevron interativo (`<CaretDown />`).
+  - **Estado Expandido**: Ao clicar no cabeçalho, o chevron rotaciona 180° e revela a galeria completa de notas fiscais, fotos, títulos, datas e botões de visualização e exclusão.
+- **Cabeçalho Otimizado e Minimalista**:
+  - Removido contador poluído de notas anexadas no cabeçalho.
+  - Barra de busca textual substituída por um seletor dropdown direto de obras (`[ Todas as obras ]` ou seleção de obra específica), simplificando a navegação tanto em desktop quanto em mobile.
+- **Preservação Web**: Na versão desktop, todos os cards continuam abertos e com visualização direta e completa das notas.
 
+### 22.13 Decisões & Aprovações - Barra de Ações Mobile (Nova Proposta à Esquerda e Ícone de Funil à Direita)
+- **Preservação Rigorosa da Versão Web**:
+  - A versão desktop (> 768px) permanece 100% inalterada com a estrutura original: pills de status superiores (Todas, Pendentes, Aprovadas), botão "Nova Proposta" no canto superior direito e painel financeiro completo.
+- **Barra de Ações Exclusiva no Mobile (`.decisoes-actions-mobile`)**:
+  - Na versão mobile (<= 768px), o botão "+ Nova Proposta" fica posicionado à esquerda e o ícone de filtro padronizado do projeto (`<Funnel size={18} />`) à direita na mesma linha horizontal.
+  - O ícone do funil exibe indicador sutil de estado ativo quando um filtro específico está selecionado.
+  - Ao tocar no funil, abre-se um menu pop-up flutuante suspenso com as opções de filtragem (*Todas as decisões*, *Pendentes de validação*, *Aprovadas por ambos*), com fechamento automático ao selecionar ou clicar fora (`mousedown`/`touchstart`).
 
-
+### 22.14 Tela de Login & Cadastro Adaptada ao Mobile (Sem Scroll de Página)
+- **Eliminação do Scroll de Fundo no Mobile (`.login-screen-wrapper` & `.login-page-container`)**:
+  - Na versão mobile (`max-width: 768px`), o container principal utiliza altura dinâmica fixa `100dvh` (`max-height: var(--vvh, 100dvh)`) com `overflow: hidden`, impedindo o surgimento da barra de rolagem externa da página.
+  - O card de login e cadastro (`.login-card`) ajusta proporcionalmente suas dimensões internas para caber perfeitamente na área visível da tela de qualquer smartphone (logo otimizado para 36px, cabeçalho e abas compactos, e espaçamentos internos harmonizados).
+  - O corpo do card (`.login-card-body`) conta com rolagem interna suave invisível (`overflow-y: auto`, `scrollbar-width: none`) exclusivamente como proteção em telas de altura extremamente reduzida ou ao abrir o teclado virtual, mantendo o fundo e os eixos estruturais do app 100% estáticos.
+- **Preservação Rigorosa da Versão Web**: A versão desktop (> 768px) permanece com seus espaçamentos e dimensões originais generosos intactos.
 
 

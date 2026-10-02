@@ -21,9 +21,10 @@ import {
   Funnel,
   Check,
   Package,
+  Receipt,
   CaretDown,
 } from '@phosphor-icons/react';
-import { Obra, Tarefa, Etapa, Decisao, AnexoItem, PerfilUsuario, PunchListItem, RegistroMaterial } from '../types/obra';
+import { Obra, Tarefa, Etapa, Decisao, AnexoItem, PerfilUsuario, PunchListItem, RegistroMaterial, RegistroNota } from '../types/obra';
 import { getEtapaIcon } from '../utils/etapaIcons';
 import { formatarMoeda } from '../utils/moeda';
 
@@ -40,8 +41,9 @@ export interface DiarioEntry {
     | 'evidencia_tarefa'
     | 'anexo_geral'
     | 'vistoria_concluida'
-    | 'material_registrado';
-  categoria: 'etapa' | 'decisao' | 'evidencia' | 'financeiro' | 'material';
+    | 'material_registrado'
+    | 'nota_registrada';
+  categoria: 'etapa' | 'decisao' | 'evidencia' | 'financeiro' | 'material' | 'nota';
   titulo: string;
   subtitulo?: string;
   descricao?: string;
@@ -358,22 +360,6 @@ export const DiarioObraTab: React.FC<DiarioObraTabProps> = ({
           subtitulo: `Ambiente: ${item.ambiente || 'Geral'} • Validado`,
         });
       }
-    });
-
-    // E) Registros de Materiais
-    (obra.materiais || []).forEach((material) => {
-      const timestamp = material.criadoEm || obraCriadaEm;
-      entries.push({
-        id: `entry_material_${material.id}`,
-        dataHora: timestamp,
-        dataKey: extrairDataKey(timestamp),
-        tipo: 'material_registrado',
-        categoria: 'material',
-        titulo: material.nome,
-        subtitulo: material.status !== 'Materiais' ? material.status : undefined,
-        descricao: material.observacoes,
-        fotos: material.fotos,
-      });
     });
 
     return entries;
@@ -1075,13 +1061,6 @@ export const DiarioObraTab: React.FC<DiarioObraTabProps> = ({
                     tagBg = '#dcfce7';
                     tagColor = '#15803d';
                     IconComponent = CheckCircle;
-                  } else if (entry.tipo === 'material_registrado') {
-                    iconBg = 'var(--dark-coffee-100)';
-                    iconColor = 'var(--dark-coffee-800)';
-                    tagLabel = 'MATERIAL';
-                    tagBg = 'var(--dark-coffee-100)';
-                    tagColor = 'var(--dark-coffee-800)';
-                    IconComponent = Package;
                   }
 
                   const temAditivo = entry.valorAditivo !== undefined && entry.valorAditivo > 0;
@@ -1119,9 +1098,6 @@ export const DiarioObraTab: React.FC<DiarioObraTabProps> = ({
                   } else if (entry.tipo === 'vistoria_concluida') {
                     mobileTituloPrincipal = 'Vistoria Final';
                     mobileSubtitulo = entry.titulo.replace(/^Vistoria Final:\s*/, '');
-                  } else if (entry.tipo === 'material_registrado') {
-                    mobileTituloPrincipal = 'Registro de Material';
-                    mobileSubtitulo = entry.titulo;
                   } else if (entry.tipo === 'anexo_geral') {
                     mobileTituloPrincipal = 'Diário de Canteiro';
                     mobileSubtitulo = entry.titulo;

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Obra, ToastMessage, ToastType, PerfilUsuario, PresetTipoObra, ProjetoPDF, TipoProjeto, RegistroMaterial } from './types/obra';
+import { Obra, ToastMessage, ToastType, PerfilUsuario, PresetTipoObra, ProjetoPDF, TipoProjeto, RegistroNota } from './types/obra';
 import { loadObrasFromStorage, saveObrasToStorage, loadTemplatesFromStorage, saveTemplatesToStorage } from './utils/storage';
 import { Navbar } from './components/Navbar';
 import { ObraList } from './components/ObraList';
 import { ObraDetail } from './components/ObraDetail';
 import { ModalCreateObra } from './components/ModalCreateObra';
-import { ModalRegistroMaterial, NovoMaterialData } from './components/ModalRegistroMaterial';
+import { ModalRegistroNota, NovaNotaData } from './components/ModalRegistroNota';
 import { LoginPage, UserRole } from './components/LoginPage';
 import { ToastContainer } from './components/Toast';
 
@@ -14,6 +14,9 @@ const ConfigTemplatesPage = React.lazy(() =>
 );
 const PublicUploadProjetoPage = React.lazy(() =>
   import('./components/PublicUploadProjetoPage').then((m) => ({ default: m.PublicUploadProjetoPage }))
+);
+const RegistroNotasPage = React.lazy(() =>
+  import('./components/RegistroNotasPage').then((m) => ({ default: m.RegistroNotasPage }))
 );
 
 export const App: React.FC = () => {
@@ -28,9 +31,17 @@ export const App: React.FC = () => {
     }
   });
   const [isCreateObraOpen, setIsCreateObraOpen] = useState(false);
-  const [isRegistroMaterialOpen, setIsRegistroMaterialOpen] = useState(false);
-  const [materialPreselectedObraId, setMaterialPreselectedObraId] = useState<string | undefined>(undefined);
+  const [isRegistroNotaOpen, setIsRegistroNotaOpen] = useState(false);
+  const [notaPreselectedObraId, setNotaPreselectedObraId] = useState<string | undefined>(undefined);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isRegistroNotasPageOpen, setIsRegistroNotasPageOpen] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('view') === 'notas';
+    } catch {
+      return false;
+    }
+  });
 
   // Gerenciamento de Estado de Autenticação (Fake Login & Local State)
   const [isLogged, setIsLogged] = useState<boolean>(() => {
@@ -192,11 +203,51 @@ export const App: React.FC = () => {
         }
       }
 
+      if (isRegistroNotasPageOpen) {
+        url.searchParams.set('view', 'notas');
+      } else {
+        url.searchParams.delete('view');
+      }
+
       if (url.search !== prevSearch) {
         window.history.replaceState({}, '', url.toString());
       }
     } catch {}
-  }, [currentObraId, perfilAtivo, activeTab, publicUploadObraId]);
+  }, [currentObraId, perfilAtivo, activeTab, publicUploadObraId, isRegistroNotasPageOpen]);
+
+  // -------------------------------------------------------
+  // visualViewport: mantém --vvh sempre igual à altura real
+  // do viewport visível (fundamental para modais no mobile
+  // quando o teclado virtual encolhe a tela)
+  // -------------------------------------------------------
+  useEffect(() => {
+    const setVVH = () => {
+      const h = window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+      document.documentElement.style.setProperty('--vvh', `${h}px`);
+    };
+
+    setVVH(); // valor inicial
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', setVVH);
+      vv.addEventListener('scroll', setVVH);
+    } else {
+      window.addEventListener('resize', setVVH);
+    }
+
+    return () => {
+      const vv2 = window.visualViewport;
+      if (vv2) {
+        vv2.removeEventListener('resize', setVVH);
+        vv2.removeEventListener('scroll', setVVH);
+      } else {
+        window.removeEventListener('resize', setVVH);
+      }
+    };
+  }, []);
 
   // Suporte a navegação nativa do navegador (botões Voltar e Avançar via popstate)
   useEffect(() => {
@@ -206,7 +257,9 @@ export const App: React.FC = () => {
         const obraParam = params.get('obra');
         const perfilParam = params.get('perfil');
         const tabParam = params.get('tab');
+        const viewParam = params.get('view');
 
+        setIsRegistroNotasPageOpen(viewParam === 'notas');
         setCurrentObraId(obraParam);
         if (perfilParam === 'cliente' || perfilParam === 'construtor') {
           setPerfilAtivo(perfilParam);
@@ -328,10 +381,12 @@ export const App: React.FC = () => {
   const handleBackToObras = () => {
     setCurrentObraId(null);
     setIsConfigOpen(false);
+    setIsRegistroNotasPageOpen(false);
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete('obra');
       url.searchParams.delete('tab');
+      url.searchParams.delete('view');
       window.history.pushState({}, '', url.toString());
     } catch {}
   };
@@ -381,45 +436,44 @@ export const App: React.FC = () => {
     setObras((prev) => prev.map((o) => (o.id === updatedObra.id ? updatedObra : o)));
   };
 
-  // Controle de Registro de Materiais
-  const handleOpenRegistroMaterial = (targetObraId?: string) => {
+  // Controle de Registro de Notas
+  const handleOpenRegistroNota = (targetObraId?: string) => {
     if (obras.length === 0) {
       showToast(
         'Nenhuma obra cadastrada',
-        'Cadastre uma obra antes de realizar o registro de materiais.',
+        'Cadastre uma obra antes de realizar o registro de notas.',
         'warning'
       );
       return;
     }
-    setMaterialPreselectedObraId(targetObraId || currentObraId || undefined);
-    setIsRegistroMaterialOpen(true);
+    setNotaPreselectedObraId(targetObraId || currentObraId || undefined);
+    setIsRegistroNotaOpen(true);
   };
 
-  const handleSaveMaterial = (dados: NovoMaterialData) => {
+  const handleSaveNota = (dados: NovaNotaData) => {
     const obraAlvo = obras.find((o) => o.id === dados.obraId);
     if (!obraAlvo) return;
 
-    const novoRegistro: RegistroMaterial = {
-      id: `mat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    const novoRegistro: RegistroNota = {
+      id: `nota_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       obraId: dados.obraId,
-      nome: dados.nome,
-      status: dados.status,
       fotos: dados.fotos,
+      titulo: dados.titulo,
       observacoes: dados.observacoes,
       criadoEm: new Date().toISOString(),
     };
 
     const updatedObra: Obra = {
       ...obraAlvo,
-      materiais: [novoRegistro, ...(obraAlvo.materiais || [])],
+      notas: [novoRegistro, ...(obraAlvo.notas || [])],
     };
 
     handleUpdateObra(updatedObra);
-    setIsRegistroMaterialOpen(false);
+    setIsRegistroNotaOpen(false);
 
     showToast(
-      'Material Registrado!',
-      `"${dados.nome}" foi vinculado com sucesso à obra "${obraAlvo.nome}".`,
+      'Nota Registrada!',
+      `A nota foi anexada com sucesso à obra "${obraAlvo.nome}".`,
       'success'
     );
 
@@ -430,25 +484,36 @@ export const App: React.FC = () => {
     }
   };
 
-  // Simulação de Autenticação (Fake Login)
-  const handleLogin = (selectedRole: UserRole, emailDigitado?: string) => {
+  // Simulação de Autenticação (Fake Login & Cadastro)
+  const handleLogin = (
+    selectedRole: UserRole,
+    emailDigitado?: string,
+    nomeDigitado?: string,
+    empresaDigitada?: string
+  ) => {
     setIsLogged(true);
     setRole(selectedRole);
     setCurrentObraId(null); // Redireciona para a Home
     setIsConfigOpen(false);
     const emailToSet = emailDigitado || (selectedRole === 'Construtor' ? 'engenharia@albuquerque.com.br' : 'carolina.mendes@cliente.com');
-    const nomeToSet = selectedRole === 'Construtor' ? 'Engenheiro Responsável' : 'Carolina Mendes';
+    const nomeToSet = nomeDigitado || (selectedRole === 'Construtor' ? 'Engenheiro Responsável' : 'Carolina Mendes');
     setUserEmail(emailToSet);
     setUserName(nomeToSet);
+    if (empresaDigitada) {
+      setUserEmpresa(empresaDigitada);
+    }
     try {
       localStorage.setItem('eixo_auth_isLogged', 'true');
       localStorage.setItem('eixo_auth_role', selectedRole);
       localStorage.setItem('eixo_auth_userEmail', emailToSet);
       localStorage.setItem('eixo_auth_userName', nomeToSet);
+      if (empresaDigitada) {
+        localStorage.setItem('eixo_empresa_cadastrada', empresaDigitada);
+      }
     } catch {}
     showToast(
-      'Login realizado com sucesso!',
-      `Bem-vindo ao Eixo como ${selectedRole}.`,
+      nomeDigitado ? 'Conta criada com sucesso!' : 'Login realizado com sucesso!',
+      `Bem-vindo ao Eixo, ${nomeToSet} (${selectedRole}).`,
       'success'
     );
   };
@@ -605,13 +670,12 @@ export const App: React.FC = () => {
         },
       ],
       punchList: [],
-      materiais: [
+      notas: [
         {
-          id: 'mat_demo_1',
+          id: 'nota_demo_1',
           obraId: `obra_demo_${Date.now()}`,
-          nome: '50 sacos de Cimento CP-II 32 e Areia Lavada',
-          status: 'Entregue na Obra',
-          observacoes: 'Entrega realizada pelo Depósito São Paulo. NF nº 48.912 conferida e material armazenado no canteiro.',
+          titulo: 'NF 48.912 - Depósito São Paulo',
+          observacoes: 'Entrega de cimento e areia lavada conferida no canteiro.',
           fotos: [
             'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80',
           ],
@@ -712,7 +776,7 @@ export const App: React.FC = () => {
   // Se o usuário não estiver logado, exibe a tela de login
   if (!isLogged) {
     return (
-      <div className="app-container">
+      <div className="login-screen-wrapper">
         <LoginPage
           onLogin={handleLogin}
           initialRole={Role}
@@ -760,7 +824,10 @@ export const App: React.FC = () => {
         isConfigOpen={isConfigOpen}
         onLogout={handleLogout}
         onOpenCreateObra={() => setIsCreateObraOpen(true)}
-        onOpenRegistroMaterial={() => handleOpenRegistroMaterial(currentObraId || undefined)}
+        onOpenRegistroNota={() => {
+          setIsConfigOpen(false);
+          setIsRegistroNotasPageOpen(true);
+        }}
         userName={userName}
         userEmail={userEmail}
         userEmpresa={userEmpresa}
@@ -780,6 +847,16 @@ export const App: React.FC = () => {
               onUpdateTemplates={handleUpdateTemplates}
               onBack={() => setIsConfigOpen(false)}
               showToast={showToast}
+            />
+          </React.Suspense>
+        ) : isRegistroNotasPageOpen ? (
+          <React.Suspense fallback={<div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando registro de notas...</div>}>
+            <RegistroNotasPage
+              obras={obras}
+              onUpdateObra={handleUpdateObra}
+              onBack={() => setIsRegistroNotasPageOpen(false)}
+              showToast={showToast}
+              perfilAtivo={perfilAtivo}
             />
           </React.Suspense>
         ) : !currentObra ? (
@@ -822,13 +899,13 @@ export const App: React.FC = () => {
         onSubmit={handleCreateObra}
       />
 
-      {/* Modal de Registro de Materiais */}
-      <ModalRegistroMaterial
-        isOpen={isRegistroMaterialOpen}
-        onClose={() => setIsRegistroMaterialOpen(false)}
+      {/* Modal de Registro de Notas */}
+      <ModalRegistroNota
+        isOpen={isRegistroNotaOpen}
+        onClose={() => setIsRegistroNotaOpen(false)}
         obras={obras}
-        preselectedObraId={materialPreselectedObraId}
-        onSave={handleSaveMaterial}
+        preselectedObraId={notaPreselectedObraId}
+        onSave={handleSaveNota}
       />
 
       {/* Notificações Toast Flutuantes */}
