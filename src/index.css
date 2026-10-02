@@ -832,9 +832,25 @@ input, textarea, select {
   min-height: 0;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
+}
+
+
+@keyframes drawerSlideLeft {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes drawerSlideRight {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .modal-header {
@@ -2067,5 +2083,244 @@ input, textarea, select {
   }
 }
 
+/* ========================================================
+   Card de Projetos & Documentos Responsivo (Breakpoint)
+   ======================================================== */
+.projeto-card {
+  background: #ffffff;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
 
+.projeto-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.projeto-card-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.projeto-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Versão Mobile (Breakpoint <= 768px): Coluna e botões abaixo das informações */
+@media (max-width: 768px) {
+  .projeto-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
+  .projeto-card-info {
+    width: 100%;
+  }
+
+  .projeto-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-hairline);
+    flex-wrap: wrap;
+  }
+
+  .projeto-card-actions .btn-secondary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* ========================================================
+   CARD DE DECISÕES: ACCORDION EXCLUSIVO NO MOBILE
+   ======================================================== */
+.decisao-card-desktop {
+  display: block;
+}
+
+.decisao-card-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .decisao-card-desktop {
+    display: none !important;
+  }
+
+  .decisao-card-mobile {
+    display: block !important;
+  }
+
+  .decisao-card-mobile-container {
+    background: #ffffff;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-subtle);
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .decisao-card-mobile-header {
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+  }
+
+  .decisao-card-mobile-header:focus-visible {
+    outline: 2px solid var(--primary-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* ========================================================
+   DIÁRIO DE OBRA: ACCORDION EXCLUSIVO NO MOBILE
+   ======================================================== */
+.diario-card-desktop {
+  display: block;
+}
+
+.diario-card-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .diario-card-desktop {
+    display: none !important;
+  }
+
+  .diario-card-mobile {
+    display: block !important;
+  }
+
+  .diario-card-mobile-header {
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    transition: background 0.15s ease;
+  }
+
+  .diario-card-mobile-header:hover {
+    background: var(--dark-coffee-50);
+  }
+
+  .diario-card-mobile-header:focus-visible {
+    outline: 2px solid var(--primary-accent);
+    outline-offset: -2px;
+  }
+}
+
+/* ========================================================
+   CABEÇALHO DA OBRA: METADADOS RESPONSIVOS (DESKTOP VS MOBILE)
+   ======================================================== */
+.obra-meta-desktop {
+  display: flex;
+}
+
+.obra-meta-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .obra-meta-desktop {
+    display: none !important;
+  }
+
+  .obra-meta-mobile {
+    display: flex !important;
+    flex-direction: column;
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+}
+
+/* ========================================================
+   CARTÃO DE OBRA NA LISTA: RESPONSIVIDADE DESKTOP VS MOBILE
+   ======================================================== */
+.obra-card-desktop {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 24px !important;
+}
+
+.obra-card-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .obra-card-desktop {
+    display: none !important;
+  }
+
+  .obra-card-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+}
+
+/* ========================================================
+   PAINEL FINANCEIRO DE ADITIVOS: ACCORDION EXCLUSIVO NO MOBILE
+   ======================================================== */
+.painel-financeiro-desktop {
+  display: block !important;
+}
+
+.painel-financeiro-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .painel-financeiro-desktop {
+    display: none !important;
+  }
+
+  .painel-financeiro-mobile {
+    display: block !important;
+  }
+}
+
+/* ========================================================
+   SUPRESSÃO MOBILE: CONTADORES E AÇÃO TESTAR CLIENTE
+   ======================================================== */
+.diario-contador-desktop,
+.projetos-contador-desktop,
+.projetos-tab-badge-desktop {
+  display: inline-block;
+}
+
+.share-testar-cliente-btn {
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .diario-contador-desktop,
+  .projetos-contador-desktop,
+  .projetos-tab-badge-desktop,
+  .share-testar-cliente-btn {
+    display: none !important;
+  }
+}
 

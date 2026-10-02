@@ -147,9 +147,10 @@ export const ProjetosTab: React.FC<ProjetosTabProps> = ({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
-              Projetos & Pranchas em PDF
+              Projetos e Documentos
             </h2>
             <span
+              className="projetos-contador-desktop"
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 700,
@@ -161,6 +162,7 @@ export const ProjetosTab: React.FC<ProjetosTabProps> = ({
             >
               {projetos.length} {projetos.length === 1 ? 'prancha' : 'pranchas'}
             </span>
+
           </div>
           <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: 2 }}>
             Plantas executivas categorizadas por disciplina técnica
@@ -583,20 +585,10 @@ export const ProjetosTab: React.FC<ProjetosTabProps> = ({
             return (
               <div
                 key={projeto.id}
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid var(--border-hairline)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '16px 18px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: 14,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                }}
+                className="projeto-card"
               >
                 {/* Lado Esquerdo: Ícone da Disciplina + Detalhes */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flex: 1, minWidth: 0 }}>
+                <div className="projeto-card-info">
                   <div
                     style={{
                       background: config.bg,
@@ -708,7 +700,7 @@ export const ProjetosTab: React.FC<ProjetosTabProps> = ({
                 </div>
 
                 {/* Lado Direito: Ações */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div className="projeto-card-actions">
                   <button
                     type="button"
                     onClick={() => setPreviewProjeto(projeto)}

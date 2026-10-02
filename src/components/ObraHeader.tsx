@@ -1,10 +1,10 @@
 import React from 'react';
-import { PencilSimple, MapPin, User, CalendarBlank, CheckCircle, FileText, CurrencyDollar } from '@phosphor-icons/react';
+import { MapPin, User, CalendarBlank, CheckCircle, FileText, CurrencyDollar } from '@phosphor-icons/react';
 import { Obra, PerfilUsuario } from '../types/obra';
 
 interface ObraHeaderProps {
   obra: Obra;
-  onEdit: () => void;
+  onEdit?: () => void;
   onOpenRelatorio?: () => void;
   perfilAtivo?: PerfilUsuario;
 }
@@ -52,28 +52,10 @@ export const ObraHeader: React.FC<ObraHeaderProps> = ({ obra, onEdit, onOpenRela
     <div className="obra-header-panel">
       <div className="obra-header-top">
         <div className="obra-title-block">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-                color: isConcluida ? '#16a34a' : 'var(--primary-accent)',
-              }}
-            >
-              {isConcluida ? 'Obra Concluída' : 'Obra Ativa'}
-            </span>
-            <span style={{ color: 'var(--border-hairline)' }}>•</span>
-            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              {obra.etapas.length} {obra.etapas.length === 1 ? 'etapa' : 'etapas'} no cronograma
-            </span>
-          </div>
+          <h1 style={{ margin: 0 }}>{obra.nome}</h1>
 
-          <h1 style={{ marginTop: 4 }}>{obra.nome}</h1>
-
-          {/* Faixa de Metadados Diretos */}
-          <div className="obra-meta-strip">
+          {/* Faixa de Metadados Diretos - Versão Desktop (inalterada) */}
+          <div className="obra-meta-strip obra-meta-desktop">
             <div className="obra-meta-item">
               <User size={16} color="var(--primary-accent)" weight="bold" />
               <span>Cliente: <strong>{obra.cliente}</strong></span>
@@ -109,6 +91,35 @@ export const ObraHeader: React.FC<ObraHeaderProps> = ({ obra, onEdit, onOpenRela
               </div>
             )}
           </div>
+
+          {/* Faixa de Metadados Diretos - Versão Mobile (exclusivo <= 768px) */}
+          <div className="obra-meta-mobile">
+            <div className="obra-meta-item" style={{ marginBottom: 8 }}>
+              <User size={16} color="var(--primary-accent)" weight="bold" />
+              <span>Cliente: <strong>{obra.cliente}</strong></span>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 18,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div className="obra-meta-item">
+                <CalendarBlank size={16} color="var(--primary-accent)" weight="bold" />
+                <strong>{formatarData(obra.dataPrevista)}</strong>
+              </div>
+
+              {obra.orcamentoInicial !== undefined && obra.orcamentoInicial > 0 && (
+                <div className="obra-meta-item">
+                  <CurrencyDollar size={16} color="var(--primary-accent)" weight="bold" />
+                  <strong>{formatarMoeda(obra.orcamentoInicial)}</strong>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -116,7 +127,7 @@ export const ObraHeader: React.FC<ObraHeaderProps> = ({ obra, onEdit, onOpenRela
             <button
               onClick={onOpenRelatorio}
               className={isConcluida ? 'btn-primary' : 'btn-secondary'}
-              title={isConcluida ? 'Gerar relatório de conclusão da obra' : 'Gerar relatório de evolução física e medição'}
+              title="Gerar Relatório Final"
               style={{
                 padding: '7px 14px',
                 fontSize: '0.82rem',
@@ -126,16 +137,11 @@ export const ObraHeader: React.FC<ObraHeaderProps> = ({ obra, onEdit, onOpenRela
               }}
             >
               <FileText size={16} weight="bold" />
-              <span>{isConcluida ? 'Relatório de Conclusão' : 'Relatório de Evolução Física'}</span>
+              <span>Relatório Final</span>
             </button>
           )}
 
-          {perfilAtivo === 'construtor' ? (
-            <button onClick={onEdit} className="btn-secondary" title="Editar dados da obra">
-              <PencilSimple size={16} weight="bold" />
-              <span>Editar Obra</span>
-            </button>
-          ) : (
+          {perfilAtivo === 'cliente' && (
             <span
               style={{
                 fontSize: '0.8rem',

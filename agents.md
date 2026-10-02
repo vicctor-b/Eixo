@@ -68,9 +68,12 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - A decisão fica em estado `pendente` (com selo e ícone `<Clock />`) até a contraparte analisar.
   - A contraparte possui ações imediatas de **Concordar e Assinar** ou **Recusar**.
   - Uma vez assinada pela contraparte, a decisão torna-se `aprovada` e exibe carimbo digital auditável com nome, perfil e data/hora exatos de ambas as assinaturas.
-- **Modal de Criação Minimalista**: Apenas título, descrição, campos financeiros dedicados de **Aditivo (R$)** (+ Acréscimo) e **Supressivo (R$)** (- Redução Contratual) — com suporte a preenchimento conjunto na mesma decisão para compensação direta (ex: troca de material com crédito e acréscimo simultâneos) — e upload opcional de fotos de amostra, sem textos redundantes nem campo de categoria.
+- **Modal de Criação Minimalista**: Apenas título, descrição, campos financeiros dedicados de **Aditivo (R$)** (+ Acréscimo) e **Supressivo (R$)** (- Redução Contratual) com exclusão mútua estrita (apenas um dos campos pode ser preenchido por decisão, impedindo preenchimento simultâneo) e upload opcional de fotos de amostra, sem textos redundantes nem campo de categoria.
 - **Remoção de Categorias**: O seletor de categorias foi removido da criação para desburocratizar o registro de decisões pelo usuário.
 - **Central de Notificações**: Sininho com contador em tempo real no topo informando decisões pendentes da assinatura do perfil logado, com dropdown para navegação direta.
+- **Card de Decisões Responsivo (Accordion Exclusivo no Mobile)**:
+  - **Versão Web / Desktop (> 768px)**: Permanece 100% inalterada, sempre exibindo o card completo com cabeçalho, autor, data, tags, valor, descrição, amostras e bloco de assinatura digital aberto.
+  - **Versão Mobile (<= 768px)**: Opera como componente expansível (Accordion/Collapse). No **Estado Minimizado**, exibe exclusivamente o título da decisão, a tag de status, o valor (aditivo/supressivo) e o ícone de seta (Chevron) no canto direito indicando expansão. No **Estado Expandido** (revelado ao clicar), exibe autor, data, descrição completa, fotos de referência, botão de notificação via WhatsApp e todo o bloco de Assinatura Digital com as ações finais (`Recusar` e `Concordar e Assinar Decisão`).
 
 ---
 
@@ -79,10 +82,11 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 1. **Header Geral Limpo**:
    - O header contém estritamente o logotipo, o seletor de perfil pill (`[ Construtor ]` / `[ Cliente ]`) e o sininho de notificações.
    - O botão "Nova Obra" foi removido do header e vive apenas na listagem de obras do construtor.
-2. **Seta de Voltar no Corpo**:
-   - O botão `[ ← Todas as Obras ]` fica dentro do corpo de `ObraDetail`, totalmente desacoplado da barra superior.
-3. **Aba Compartilhar**:
-   - O compartilhamento com o cliente foi integrado como a 5ª aba da obra (ordem oficial: `Etapas`, `Arquivos`, `Decisões`, `Diário`, `Compartilhar`).
+2. **Barra Superior Interna da Obra**:
+   - O botão `[ ← Todas as Obras ]` fica dentro do corpo de `ObraDetail`, na mesma linha da ação de **Editar Obra**, que foi movida do rodapé para o topo, alinhada à direita e representada exclusivamente por um ícone de lápis padrão (`<PencilSimple size={18} />`).
+3. **Sequência Oficial de Abas por Perfil**:
+   - **Visão do Construtor**: `Etapas`, `Arquivos`, `Decisões`, `Diário`, `Compartilhar`.
+   - **Visão do Cliente**: `Diário`, `Etapas`, `Arquivos`, `Decisões`, `Compartilhar`. Na visão do cliente, o Diário de Obra assume a primeira posição do menu, permitindo que o cliente acompanhe imediatamente o feed/extrato diário do canteiro ao abrir a obra.
 4. **Navegação Cruzada (Diário $\rightarrow$ Etapas)**:
    - Clicar nos detalhes de uma anotação ou serviço no Diário navega instantaneamente para a aba de Etapas.
    - O accordion da etapa é expandido automaticamente caso esteja fechado.
@@ -127,9 +131,9 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 
 ---
 
-## 9. Central de Projetos Técnicos em PDF (`ProjetosTab` & `ModalUploadProjeto`)
+## 9. Central de Projetos e Documentos (`ProjetosTab` & `ModalUploadProjeto`)
 
-- **Aba "Projetos (PDF)" na Obra**:
+- **Aba "Arquivos" (Projetos e Documentos) na Obra**:
   - Aba integrada na visualização da obra (`ObraDetail`), posicionada como 2ª aba, logo após Etapas & Cronograma e antes de Decisões & Aprovações.
   - Exibe contador dinâmico de pranchas/projetos anexados.
 - **Upload com Classificação Técnica Obrigatória**:
@@ -139,6 +143,9 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
 - **Visualização e Download Integrados**:
   - Ações rápidas de **Visualizar** (modal com visualizador embutido ou abertura em nova guia) e **Baixar** direto no dispositivo.
   - Filtros rápidos por chips de categoria e busca textual em tempo real.
+- **Responsividade do Card de Projetos (`.projeto-card`)**:
+  - Versão Web / Desktop: Layout horizontal em linha (`Row`) intacto com informações à esquerda e ações alinhadas à direita.
+  - Versão Mobile (`max-width: 768px`): Direção em coluna (`Column`), com o grupo de botões (*Visualizar*, *Baixar* e *Lixeira*) caindo para uma nova linha abaixo das informações do arquivo, garantindo espaço total para textos e metadados no celular.
 
 ---
 
@@ -207,7 +214,7 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - **Mecânica de Aditivo e Supressivo**:
     - **Aditivo (+R$)**: acréscimo de escopo ou melhoria técnica que eleva o investimento final.
     - **Supressivo (-R$)**: exclusão de escopo, permuta de acabamentos por itens mais econômicos ou reajuste contratual para baixo, deduzindo diretamente do saldo do contrato.
-    - **Registro Conjunto**: capacidade de lançar na mesma decisão tanto o Aditivo quanto o Supressivo (ex: permuta onde se deduz o revestimento original e se acrescenta o novo padrão), calculando automaticamente o saldo líquido da decisão e somando corretamente cada componente nos painéis gerais.
+    - **Exclusão Mútua**: cada decisão pode conter estritamente um Aditivo ou um Supressivo (nunca ambos simultâneos), garantindo que cada pleito seja auditável e claro quanto à sua natureza de acréscimo ou dedução.
   - Soma automática e auditável de todos os aditivos e supressivos aprovados bilateralmente (`status === 'aprovada'`).
   - Fórmula matemática consolidada: `Investimento Atualizado = Orçamento Base + Aditivos Aprovados + Supressivos Aprovados (negativo)`.
 - **Visualização em Pílulas e Cards**:
@@ -271,7 +278,9 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - Ao clicar, abre popup flutuante suspenso com campo de texto autofocado, ícone de limpeza (`✕`) e fechamento via clique fora ou tecla `Escape`.
 - **Permissões Rigorosas por Perfil**:
   - **Construtor**: Visualização completa + botão `[ + Novo Registro ]` abrindo modal para lançar anotação técnica ou foto direcionada a um serviço específico de qualquer etapa ou como anotação geral de canteiro.
-  - **Cliente**: Modo 100% Read-Only de acompanhamento transparente (sem botões de inserção ou exclusão, permitindo inspecionar evidências, fotos em tela cheia e extrato completo).
+- **Card de Registro Responsivo (Accordion Exclusivo no Mobile)**:
+  - **Versão Web / Desktop (> 768px)**: Mantém o layout horizontal cardless intacto e totalmente aberto, exibindo hora, ícone temático, tag de status, etapa, título, descrição, fotos, valores financeiros e atalhos rápidos de navegação.
+  - **Versão Mobile (<= 768px)**: Opera como componente expansível (Accordion/Collapse). No **Estado Minimizado (Padrão)**, oculta a hora, caixa de texto com detalhes e botões de atalho, exibindo duas informações empilhadas: o **Título Principal** em destaque com o nome da Etapa (ex: 'Demolição') e o **Subtítulo** logo abaixo com o nome da tarefa executada (ex: 'Ensacamento e descarte de entulho.'), acompanhados do Chevron no canto direito indicando expansão. No **Estado Expandido (Ao clicar)**, expande para baixo revelando a hora, tag de status, etapa contextual, caixa de descrição detalhada, anotações de campo, miniaturas de fotos e botões de ação ("Cronograma" / "Decisões").
 
 ---
 
@@ -297,4 +306,167 @@ A aplicação implementa dois perfis com níveis de permissão transparentes:
   - Redução expressiva do chunk inicial de 668 kB para 588 kB.
 - **Higienização de Código Morto**:
   - Remoção definitiva de componentes órfãos descontinuados (`AnexosTab.tsx` e `ModalShareClient.tsx`).
+
+---
+
+## 18. Módulo de Registro de Materiais & Histórico de Canteiro
+
+- **Acesso Centralizado Exclusivo pelo Menu Lateral**:
+  - O botão de acionamento do `[ Registro de Materiais ]` foi centralizado e vive **exclusivamente no menu lateral (`SandwichMenu.tsx`)**, tendo sido removido de dentro da obra (`DiarioObraTab`) para simplificar a visualização do canteiro.
+  - A seleção da obra alvo é feita no próprio modal `ModalRegistroMaterial`, garantindo integridade e consistência.
+- **Vínculo Obrigatório de Obra**:
+  - O modal `ModalRegistroMaterial` exige a seleção obrigatória de uma obra já cadastrada via dropdown (`<select>`), garantindo integridade referencial dos dados (`obraId`).
+- **Campos Oficiais do Formulário**:
+  - **Status do Material**: Dropdown seletor com opção padrão `"Materiais"`, além de estados de conferência (`Entregue na Obra`, `Comprado / A caminho`, `Pendente / Em cotação`).
+  - **Descrição / Nome do Material**: Campo de texto curto para denominação e especificação do insumo.
+  - **Fotos e Comprovantes**: Upload múltiplo com miniaturas de pré-visualização, remoção rápida e compressão automática para notas fiscais e fotos físicas no canteiro.
+  - **Observações**: Campo de texto longo para fornecedor, conferência quantitativa, lote e número de nota fiscal.
+- **Exibição Bilateral Transparente**:
+  - O material registrado é consolidado no feed e no histórico diário da obra (`DiarioObraTab`), visível tanto para o Construtor quanto para o Cliente.
+  - Exibição com badge temático `MATERIAL`, linha temporal detalhada, notas e galeria de fotos com suporte a Lightbox em tela cheia.
+
+---
+
+## 19. Autenticação Frontend Mockada & Gerenciamento de Estado de Role
+
+- **Tela de Login Dedicada (`LoginPage.tsx`)**:
+  - Interface moderna e minimalista alinhada ao design system do Eixo (paleta terrosa, ícones Phosphor, zero emojis e zero alerts nativos).
+  - Inputs de **E-mail** e **Senha** com toggle de visibilidade de senha (ícones `<Eye />` e `<EyeSlash />`).
+  - Botão de submissão **Entrar** (`Submit`) e link **Esqueceu a senha?** com modal acessível de recuperação simulada.
+  - Seletor de Perfil de Acesso (`[ Construtor ]` / `[ Cliente ]`) e atalhos de acesso rápido para testes de desenvolvimento.
+- **Gerenciamento de Estado no Aplicativo (App State)**:
+  - Variáveis de estado locais:
+    - `isLogged` (Boolean): controla a exibição da tela de login vs. o aplicativo principal, persistido em `localStorage` (`eixo_auth_isLogged`).
+    - `Role` ('Construtor' | 'Cliente'): define a credencial ativa do usuário logado, persistido em `localStorage` (`eixo_auth_role`).
+  - Mapeamento transparente com o perfil ativo do sistema: `perfilAtivo = Role.toLowerCase() as PerfilUsuario`.
+  - Links compartilhados com cliente (`?perfil=cliente`) e upload público de pranchas (`?upload=projeto`) contornam a autenticação inicial mantendo o acesso seguro e direto do cliente.
+- **Simulação de Autenticação (Fake Login)**:
+  - Validação de preenchimento dos campos no submit (rejeita e-mail ou senha em branco com aviso no padrão visual do sistema).
+  - Ao aprovar, altera `isLogged` para `true`, define a `Role` selecionada, emite toast de boas-vindas e redireciona para a `Home`.
+  - Botão de logout (`<SignOut />`) integrado ao cabeçalho (`Navbar`) para fácil alternância e testes de perfis.
+- **Permissões Visuais e Renderização Condicional por Role**:
+  - **`Role === 'Construtor'`**:
+    - Acesso integral a menus de edição, criação de novas obras e gerenciamento de modelos de etapas (`ConfigTemplatesPage`).
+    - Botão **Registro de Materiais** exibido na Página Inicial (`ObraList`) e no Diário de Obra (`DiarioObraTab`).
+    - Modos de inserção e exclusão de etapas, serviços e arquivos habilitados.
+  - **`Role === 'Cliente'`**:
+    - O botão **Registro de Materiais** e menus de edição ficam estritamente ocultos.
+    - Modo de leitura e acompanhamento no Cronograma, Arquivos e Diário de Obra.
+    - Acesso exclusivo e interativo apenas na Central de Decisões e Aprovações.
+
+---
+
+## 20. Menu Sandwich Centralizador, Notificações, Registro de Materiais & Configuração de Perfil
+
+- **Botão Sandwich no Header (`Navbar.tsx`)**:
+  - Posicionado na barra de navegação com ícone Phosphor `<List size={22} weight="bold" />` e alvo de toque confortável (38x38px).
+  - Dot indicador de notificações pendentes em `coral-glow` no canto superior direito do botão quando há decisões pendentes de assinatura.
+- **Gaveta Deslizante (Slide-out Drawer) (`SandwichMenu.tsx`)**:
+  - Painel lateral suspenso deslizando suavemente da direita com backdrop escurecido e desfocado (`backdrop-filter: blur(3px)`).
+  - Fechamento imediato com clique no backdrop, botão `✕` ou tecla `Escape` (`aria-modal="true"`, `role="dialog"`).
+  - Estrutura com abas superiores internas:
+    - **Aba "Ações & Avisos"**:
+      - **Notificações de Decisões**: Lista de decisões que requerem a assinatura do perfil ativo com badge de contagem, detalhes da proposta e clique para navegação direta à decisão na obra. Estado vazio limpo com `<CheckCircle />`.
+      - **Registro de Materiais**: Card dedicado de acesso rápido para cadastro de compras, notas fiscais e fotos de canteiro vinculadas a uma obra.
+      - **Atalhos Rápidos**: Botão "Todas as Obras (Home)" e acesso a "Modelos de Obra & Etapas Padrão" (para construtor).
+    - **Aba "Configurar Perfil"**:
+      - Seletor de perfil de acesso (`[ Construtor ]` / `[ Cliente ]`) com descrição contextual dos recursos de cada perfil.
+      - Campos de dados cadastrais editáveis: Nome Completo / Exibição, E-mail de Contato e Empresa / Construtora.
+      - Botão "Salvar Perfil" com feedback de sucesso em tempo real e persistência em `localStorage`.
+- **Área de Sessão / Login no Rodapé do Sandwich Menu**:
+  - Fixado no rodapé da gaveta com divisor sutil (`border-top: 1px solid var(--border-hairline)`).
+  - Exibe avatar dinâmico com ícone temático (`<HardHat />` ou `<User />`), nome do usuário conectado, e-mail da sessão e badge de perfil ativo.
+  - Ação de autenticação contextual:
+    - Se logado: Botão executivo **"Sair da Conta (Logout)"** com `<SignOut />`.
+    - Se não logado: Botão primário **"Fazer Login"** com `<SignIn />`.
+
+---
+
+## 21. Reformulação da Navegação Principal (Header & Menu Lateral Esquerdo)
+
+- **Barra Superior (Header / App Bar) (`Navbar.tsx`)**:
+  - **Canto Superior Esquerdo**: Ícone de Menu Hambúrguer (`<List size={22} weight="bold" />`), atuando como gatilho oficial para abrir a gaveta de navegação lateral.
+  - **Canto Superior Direito**: Notificações de Decisões (`<Bell size={20} />` / `<BellRinging size={20} weight="fill" />`) com contador de pendências e dropdown de decisões, posicionado imediatamente ao lado do Ícone de Perfil de Usuário de contorno simples (`<User size={21} weight="regular" />`), atalho para **"Configurações do Cliente"** (`ModalConfiguracoesCliente.tsx`).
+- **Menu Lateral Esquerdo (Side Drawer / Sidebar) (`SandwichMenu.tsx`)**:
+  - **Comportamento**: Gaveta lateral com deslizamento fluido a partir da tela esquerda (`drawerSlideRight`).
+  - **Corpo do Menu (Navegação em Camadas)**: Design limpo em lista vertical com textos alinhados à esquerda e divisórias sutis (*hairline*), contendo estritamente duas opções de navegação:
+    1. **Obras**: Navegação e retorno para a lista de obras cadastradas.
+    2. **Registro de materiais**: Atalho direto para abertura do modal de materiais (exibido para perfil Construtor).
+  - **Rodapé do Menu (Footer)**: Botão de **Sair da Conta (Logout)** posicionado e fixado exclusivamente no rodapé do menu lateral esquerdo.
+
+---
+
+## 22. Refinamentos Recentes de Usabilidade e Layout (Mobile & Desktop)
+
+### 22.1 Auto-Scroll ao Abrir Calendário no Modal (`DatePickerInput.tsx` & `ModalEditObra.tsx`)
+- **Comportamento Mobile**: Ao clicar no ícone do calendário dentro do modal de edição no dispositivo móvel, a tela/modal-body executa rolagem suave automática (`scrollIntoView({ behavior: 'smooth', block: 'end' })`) trazendo o popover do calendário imediatamente para o campo de visão do usuário, sem necessidade de rolagem manual.
+- **Espaçamento Dinâmico**: No mobile, a margem inferior do contêiner expande temporariamente para acomodar o popover sem cortes e volta ao padrão de 16px ao fechar.
+- **Preservação Desktop**: O comportamento na versão web (> 768px) permanece 100% inalterado.
+
+### 22.2 Botão "Relatório Final" (`ObraHeader.tsx` & `ModalRelatorioObra.tsx`)
+- **Unificação Terminológica**: O botão de relatório no cabeçalho da obra foi padronizado oficialmente como **"Relatório Final"** (substituindo o antigo rótulo "Relatório de Evolução Física"), proporcionando maior clareza para construtores e clientes.
+- **Modal e Dossiê**: O modal de emissão exibe o título **"Relatório Final"** e a ação **"Baixar Relatório Final"**, mantendo a estrutura interna de conclusão (com termo de aceite) ou evolução (com termo de responsabilidade).
+
+### 22.3 Cabeçalho de Obra Otimizado no Mobile (`ObraHeader.tsx`)
+- **Remoção de Banners Redundantes**: Removida a linha superior `"Obra Ativa • X etapas no cronograma"`, alinhando o título da obra diretamente no topo.
+- **Ocultação de Endereço no Mobile**: O endereço é ocultado no cabeçalho principal no celular para poupar espaço vertical, permanecendo acessível no modal "Editar Dados da Obra".
+- **Grid Lado a Lado (Data e Orçamento)**: Sem os rótulos de texto extensos, os ícones de calendário (data) e cifrão (orçamento) ficam organizados lado a lado em uma única linha flex logo abaixo do nome do cliente.
+- **Isolamento Desktop**: A versão desktop mantém o layout completo intacto via classes responsivas isoladas (`.obra-meta-desktop` vs `.obra-meta-mobile`).
+
+### 22.4 Cards de Obra na Página Inicial (`ObraList.tsx`)
+- **Versão Mobile (`.obra-card-mobile`)**:
+  - **Linha 1**: Nome do cliente (com ícone `<User />`) e data prevista (com ícone `<CalendarBlank />`) dispostos lado a lado (`justify-content: space-between`) logo abaixo das etapas, sem rótulos repetitivos.
+  - **Linha 2**: Linha exclusiva para o endereço completo com ícone `<MapPin />` e botão de cópia rápida (`<Copy />`) alinhado à extrema direita com feedback visual temporário (`<Check /> Copiado`).
+  - **Linhas 3 e 4**: Barra de progresso linear e linha inferior de ações (lixeira e seta) mantidas.
+- **Versão Desktop (`.obra-card-desktop`)**:
+  - **Coluna Principal Expandida**: Espaçamento flex expandido (`flex: 2.5`) para preencher a largura útil e eliminar vazios indesejados.
+  - **Endereço em Linha Própria**: Endereço posicionado logo abaixo do nome do cliente, exibido por inteiro sem truncamento (`whiteSpace: 'nowrap'`).
+  - **Botão "Copiar" Dedicado**: Botão em formato de pílula posicionado abaixo do endereço, permitindo cópia rápida para o clipboard com `e.stopPropagation()`.
+
+### 22.5 Ativo Local para o Banner Hero (`public/hero-bg.jpg`)
+- **Eliminação de 404 Externo**: Substituído o link externo quebrado do Unsplash por fotografia de canteiro de obras incorporada diretamente no repositório local (`public/hero-bg.jpg`).
+- **Resiliência Offline**: Carregamento 100% local com latência zero e manipulador defensivo `onError` para ocultar o elemento caso qualquer erro ocorra, banindo ícones de imagem quebrada.
+
+### 22.6 Menu Lateral Mobile (SandwichMenu) - Otimização de Viewport e Visibilidade
+- **Exibição Irrestrita de Ações**: "Registro de materiais" disponibilizado de forma universal na gaveta de navegação sempre que disponível no aplicativo.
+- **Correção de Viewport Dinâmico (`100dvh`)**: Substituição de `100vh` por `100dvh` com posicionamento ancorado (`top: 0; bottom: 0; left: 0; right: 0`), garantindo que o rodapé com a ação de "Sair da Conta" permaneça sempre visível acima da barra de navegação dos navegadores móveis (Safari iOS e Chrome Android).
+- **Suporte a Safe Area**: Aplicação de `padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px))` no footer da gaveta para respeitar a barra inicial/gestos dos dispositivos iOS e Android.
+- **Ergonomia e Toque**: Alturas mínimas de toque ampliadas (48px para itens e 46px para botões de autenticação) para garantir usabilidade ágil no smartphone.
+
+### 22.7 Isolamento do Botão de Registro de Materiais (Exclusivo no Menu)
+- **Remoção de Dentro da Obra**: O botão "Registrar Material" foi removido da barra superior do Diário de Obra (`DiarioObraTab.tsx`) e desacoplado dos detalhes da obra (`ObraDetail.tsx`).
+- **Acesso Único e Centralizado**: A ação reside exclusivamente no menu lateral (`SandwichMenu.tsx`), preservando uma visualização mais limpa do canteiro físico e evitando redundância de botões dentro da obra.
+
+### 22.8 Calendário em Formato Pop-up Aberto para Cima (Dropup Ancorado)
+- **Abertura Superior Ancorada (`DatePickerInput.tsx`)**: O calendário opera como pop-up flutuante que abre **para cima** diretamente sobre o campo de texto (`bottom: calc(100% + 6px); z-index: 1050`), aproveitando a área útil superior dos formulários e modais e eliminando qualquer risco de corte pelo rodapé.
+- **Sombra de Elevação Superior**: Sombra personalizada projetada para cima (`0 -10px 28px -4px rgba(26, 19, 10, 0.16)`), mantendo o input original 100% visível enquanto a seleção de data ocorre.
+- **Fechamento e Acessibilidade**: Fechamento automático ao clicar fora (`mousedown`/`touchstart`), ao pressionar a tecla `Escape` ou ao selecionar um dia.
+- **Scroll Suave e Ergonomia Mobile**: Com `autoScrollOnMobile: true` por padrão, a abertura no smartphone executa rolagem suave automática (`scrollIntoView({ block: 'nearest' })`) para garantir visibilidade desimpedida.
+- **Controles Rápidos**: Mantém navegação fluida de meses (`<CaretLeft />`, `<CaretRight />`), grade de dias com destaque para "hoje" e data selecionada, além de atalhos rápidos (`+30 dias`, `+60 dias`, `+90 dias`).
+
+
+### 22.9 Painel Financeiro & Aditivos Contratuais (Accordion Exclusivo no Mobile)
+- **Comportamento Mobile (`.painel-financeiro-mobile`)**:
+  - Transformado em componente Accordion colapsável, **fechado por padrão** (`isPainelFinanceiroOpenMobile: false`).
+  - **Estado Minimizado**: Exibe exclusivamente o ícone de cifrão (`<CurrencyDollar />`), o título em caixa alta ("PAINEL FINANCEIRO & ADITIVOS CONTRATUAIS"), o subtítulo descritivo ("Consolidação de orçamento base e alterações aprovadas") e o ícone de chevron à direita (`<CaretDown />`).
+  - **Estado Expandido**: Ao clicar no cabeçalho interativo (`role="button"`, `tabIndex={0}`, `aria-expanded`), o chevron rotaciona 180° e o bloco revela com animação suave os cartões financeiros de valores (*Orçamento Base*, *Aditivos Aprovados*, *Supressivos Aprovados*, *Investimento Atualizado* e *Propostas em Análise*).
+  - **Ergonomia Mobile**: Alvo de toque mínimo com altura de 44px e área de clique cobrindo toda a extensão do cabeçalho.
+- **Preservação Desktop (`.painel-financeiro-desktop`)**:
+  - A visualização na versão web (> 768px) permanece 100% inalterada, mantendo o painel financeiro aberto e com todos os cartões visíveis em grid contínuo.
+
+### 22.10 Otimizações e Limpeza Visual Exclusivas no Mobile
+- **Diário de Obra (`DiarioObraTab.tsx`)**: O badge contador de registros diários (`.diario-contador-desktop`) ao lado da data no cabeçalho do dia foi suprimido no mobile (`display: none`), poupando espaço horizontal e mantendo o extrato limpo.
+- **Compartilhar (`ClientShareTab.tsx`)**: O botão de teste de visualização do cliente (`.share-testar-cliente-btn`, *"Testar Visão do Cliente"*) foi ocultado no mobile para evitar sobrecarga de ações, permanecendo exclusivo na versão desktop.
+- **Projetos e Documentos (`ProjetosTab.tsx` & `ObraDetail.tsx`)**:
+  - Removido o badge contador de pranchas ao lado do título da aba (`.projetos-contador-desktop`).
+  - Removido o badge numérico no botão de navegação da aba "Arquivos" (`.projetos-tab-badge-desktop`) no celular.
+- **Etapas & Cronograma (`TimelineEtapas.tsx`)**:
+  - No mobile (`window.innerWidth <= 768`), todas as etapas iniciam **minimizadas/colapsadas por padrão**, reduzindo a rolagem vertical e permitindo ao usuário abrir pontualmente a etapa de interesse.
+  - A versão desktop permanece com todas as etapas expandidas por padrão.
+
+
+
+
+
+
 

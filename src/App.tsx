@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Obra, ToastMessage, ToastType, PerfilUsuario, PresetTipoObra, ProjetoPDF, TipoProjeto } from './types/obra';
+import { Obra, ToastMessage, ToastType, PerfilUsuario, PresetTipoObra, ProjetoPDF, TipoProjeto, RegistroMaterial } from './types/obra';
 import { loadObrasFromStorage, saveObrasToStorage, loadTemplatesFromStorage, saveTemplatesToStorage } from './utils/storage';
 import { Navbar } from './components/Navbar';
 import { ObraList } from './components/ObraList';
 import { ObraDetail } from './components/ObraDetail';
 import { ModalCreateObra } from './components/ModalCreateObra';
+import { ModalRegistroMaterial, NovoMaterialData } from './components/ModalRegistroMaterial';
+import { LoginPage, UserRole } from './components/LoginPage';
 import { ToastContainer } from './components/Toast';
 
 const ConfigTemplatesPage = React.lazy(() =>
@@ -26,17 +28,89 @@ export const App: React.FC = () => {
     }
   });
   const [isCreateObraOpen, setIsCreateObraOpen] = useState(false);
+  const [isRegistroMaterialOpen, setIsRegistroMaterialOpen] = useState(false);
+  const [materialPreselectedObraId, setMaterialPreselectedObraId] = useState<string | undefined>(undefined);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [perfilAtivo, setPerfilAtivo] = useState<PerfilUsuario>(() => {
+
+  // Gerenciamento de Estado de Autenticação (Fake Login & Local State)
+  const [isLogged, setIsLogged] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('perfil') === 'cliente' || params.get('upload') === 'projeto') {
+        return true;
+      }
+      const stored = localStorage.getItem('eixo_auth_isLogged');
+      if (stored !== null) return stored === 'true';
+    } catch {}
+    return false;
+  });
+
+  const [Role, setRole] = useState<UserRole>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const perfilParam = params.get('perfil');
-      if (perfilParam === 'cliente' || perfilParam === 'construtor') {
-        return perfilParam;
+      if (perfilParam === 'cliente') return 'Cliente';
+      if (perfilParam === 'construtor') return 'Construtor';
+      const stored = localStorage.getItem('eixo_auth_role') as UserRole;
+      if (stored === 'Cliente' || stored === 'Construtor') return stored;
+    } catch {}
+    return 'Construtor';
+  });
+
+  const perfilAtivo: PerfilUsuario = Role.toLowerCase() as PerfilUsuario;
+
+  const setPerfilAtivo = (novo: PerfilUsuario) => {
+    const newRole: UserRole = novo === 'cliente' ? 'Cliente' : 'Construtor';
+    setRole(newRole);
+    try {
+      localStorage.setItem('eixo_auth_role', newRole);
+    } catch {}
+  };
+
+  // Dados Cadastrais do Perfil de Usuário (campos em branco por padrão)
+  const [userName, setUserName] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem('eixo_auth_userName');
+      if (stored) return stored;
+    } catch {}
+    return '';
+  });
+
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem('eixo_auth_userEmail');
+      if (stored) return stored;
+    } catch {}
+    return '';
+  });
+
+  const [userEmpresa, setUserEmpresa] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem('eixo_empresa_cadastrada');
+      if (stored) return stored;
+    } catch {}
+    return '';
+  });
+
+  const handleSaveProfile = (dados: { nome: string; email: string; empresa?: string }) => {
+    setUserName(dados.nome);
+    setUserEmail(dados.email);
+    if (dados.empresa !== undefined) {
+      setUserEmpresa(dados.empresa);
+    }
+    try {
+      localStorage.setItem('eixo_auth_userName', dados.nome);
+      localStorage.setItem('eixo_auth_userEmail', dados.email);
+      if (dados.empresa !== undefined) {
+        localStorage.setItem('eixo_empresa_cadastrada', dados.empresa);
       }
     } catch {}
-    return 'construtor';
-  });
+    showToast(
+      'Perfil Atualizado',
+      'As configurações de perfil foram salvas com sucesso.',
+      'success'
+    );
+  };
   const [activeTab, setActiveTab] = useState<'etapas' | 'projetos' | 'decisoes' | 'diario' | 'anexos' | 'compartilhar'>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -44,6 +118,10 @@ export const App: React.FC = () => {
       if (tabParam === 'anexos') return 'diario';
       if (tabParam === 'etapas' || tabParam === 'projetos' || tabParam === 'decisoes' || tabParam === 'diario' || tabParam === 'compartilhar') {
         return tabParam;
+      }
+      const perfilParam = params.get('perfil');
+      if (perfilParam === 'cliente') {
+        return 'diario';
       }
     } catch {}
     return 'etapas';
@@ -98,7 +176,8 @@ export const App: React.FC = () => {
           url.searchParams.delete('perfil');
         }
 
-        if (activeTab && activeTab !== 'etapas') {
+        const defaultTab = perfilAtivo === 'cliente' ? 'diario' : 'etapas';
+        if (activeTab && activeTab !== defaultTab) {
           url.searchParams.set('tab', activeTab);
         } else {
           url.searchParams.delete('tab');
@@ -139,7 +218,7 @@ export const App: React.FC = () => {
         } else if (tabParam === 'etapas' || tabParam === 'projetos' || tabParam === 'decisoes' || tabParam === 'diario' || tabParam === 'compartilhar') {
           setActiveTab(tabParam);
         } else {
-          setActiveTab('etapas');
+          setActiveTab(perfilParam === 'cliente' ? 'diario' : 'etapas');
         }
       } catch {}
     };
@@ -235,7 +314,8 @@ export const App: React.FC = () => {
       } else {
         url.searchParams.delete('perfil');
       }
-      if (activeTab && activeTab !== 'etapas') {
+      const defaultTab = perfilAtivo === 'cliente' ? 'diario' : 'etapas';
+      if (activeTab && activeTab !== defaultTab) {
         url.searchParams.set('tab', activeTab);
       } else {
         url.searchParams.delete('tab');
@@ -299,6 +379,88 @@ export const App: React.FC = () => {
   // Atualizar dados de uma obra existente
   const handleUpdateObra = (updatedObra: Obra) => {
     setObras((prev) => prev.map((o) => (o.id === updatedObra.id ? updatedObra : o)));
+  };
+
+  // Controle de Registro de Materiais
+  const handleOpenRegistroMaterial = (targetObraId?: string) => {
+    if (obras.length === 0) {
+      showToast(
+        'Nenhuma obra cadastrada',
+        'Cadastre uma obra antes de realizar o registro de materiais.',
+        'warning'
+      );
+      return;
+    }
+    setMaterialPreselectedObraId(targetObraId || currentObraId || undefined);
+    setIsRegistroMaterialOpen(true);
+  };
+
+  const handleSaveMaterial = (dados: NovoMaterialData) => {
+    const obraAlvo = obras.find((o) => o.id === dados.obraId);
+    if (!obraAlvo) return;
+
+    const novoRegistro: RegistroMaterial = {
+      id: `mat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      obraId: dados.obraId,
+      nome: dados.nome,
+      status: dados.status,
+      fotos: dados.fotos,
+      observacoes: dados.observacoes,
+      criadoEm: new Date().toISOString(),
+    };
+
+    const updatedObra: Obra = {
+      ...obraAlvo,
+      materiais: [novoRegistro, ...(obraAlvo.materiais || [])],
+    };
+
+    handleUpdateObra(updatedObra);
+    setIsRegistroMaterialOpen(false);
+
+    showToast(
+      'Material Registrado!',
+      `"${dados.nome}" foi vinculado com sucesso à obra "${obraAlvo.nome}".`,
+      'success'
+    );
+
+    // Se estiver na visão geral de obras, navega diretamente para os detalhes da obra no diário
+    if (!currentObraId || currentObraId !== dados.obraId) {
+      handleSelectObra(dados.obraId);
+      setActiveTab('diario');
+    }
+  };
+
+  // Simulação de Autenticação (Fake Login)
+  const handleLogin = (selectedRole: UserRole, emailDigitado?: string) => {
+    setIsLogged(true);
+    setRole(selectedRole);
+    setCurrentObraId(null); // Redireciona para a Home
+    setIsConfigOpen(false);
+    const emailToSet = emailDigitado || (selectedRole === 'Construtor' ? 'engenharia@albuquerque.com.br' : 'carolina.mendes@cliente.com');
+    const nomeToSet = selectedRole === 'Construtor' ? 'Engenheiro Responsável' : 'Carolina Mendes';
+    setUserEmail(emailToSet);
+    setUserName(nomeToSet);
+    try {
+      localStorage.setItem('eixo_auth_isLogged', 'true');
+      localStorage.setItem('eixo_auth_role', selectedRole);
+      localStorage.setItem('eixo_auth_userEmail', emailToSet);
+      localStorage.setItem('eixo_auth_userName', nomeToSet);
+    } catch {}
+    showToast(
+      'Login realizado com sucesso!',
+      `Bem-vindo ao Eixo como ${selectedRole}.`,
+      'success'
+    );
+  };
+
+  const handleLogout = () => {
+    setIsLogged(false);
+    setCurrentObraId(null);
+    setIsConfigOpen(false);
+    try {
+      localStorage.setItem('eixo_auth_isLogged', 'false');
+    } catch {}
+    showToast('Sessão encerrada', 'Você saiu do sistema.', 'info');
   };
 
   // Carregar Obra de Demonstração (atende o exemplo exato: 2 etapas com 2 tarefas cada = 25% por tarefa)
@@ -443,6 +605,19 @@ export const App: React.FC = () => {
         },
       ],
       punchList: [],
+      materiais: [
+        {
+          id: 'mat_demo_1',
+          obraId: `obra_demo_${Date.now()}`,
+          nome: '50 sacos de Cimento CP-II 32 e Areia Lavada',
+          status: 'Entregue na Obra',
+          observacoes: 'Entrega realizada pelo Depósito São Paulo. NF nº 48.912 conferida e material armazenado no canteiro.',
+          fotos: [
+            'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80',
+          ],
+          criadoEm: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+        },
+      ],
     };
 
     setObras([demoObra, ...obras]);
@@ -534,6 +709,19 @@ export const App: React.FC = () => {
     }
   }
 
+  // Se o usuário não estiver logado, exibe a tela de login
+  if (!isLogged) {
+    return (
+      <div className="app-container">
+        <LoginPage
+          onLogin={handleLogin}
+          initialRole={Role}
+        />
+        <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+      </div>
+    );
+  }
+
   // Obra atualmente aberta
   const currentObra = obras.find((o) => o.id === currentObraId) || null;
 
@@ -548,6 +736,11 @@ export const App: React.FC = () => {
           setPerfilAtivo(novo);
           if (novo === 'cliente' && isConfigOpen) {
             setIsConfigOpen(false);
+          }
+          if (novo === 'cliente' && activeTab === 'etapas') {
+            setActiveTab('diario');
+          } else if (novo === 'construtor' && activeTab === 'diario') {
+            setActiveTab('etapas');
           }
           showToast(
             `Perfil alterado para ${novo === 'construtor' ? 'Construtor' : 'Cliente'}`,
@@ -565,6 +758,17 @@ export const App: React.FC = () => {
           setIsConfigOpen((prev) => !prev);
         }}
         isConfigOpen={isConfigOpen}
+        onLogout={handleLogout}
+        onOpenCreateObra={() => setIsCreateObraOpen(true)}
+        onOpenRegistroMaterial={() => handleOpenRegistroMaterial(currentObraId || undefined)}
+        userName={userName}
+        userEmail={userEmail}
+        userEmpresa={userEmpresa}
+        onSaveProfile={handleSaveProfile}
+        isLogged={isLogged}
+        onOpenLogin={() => setIsLogged(false)}
+        activeTab={activeTab}
+        onChangeTab={(t) => setActiveTab(t)}
       />
 
       {/* Conteúdo Principal */}
@@ -587,7 +791,7 @@ export const App: React.FC = () => {
             onDeleteObra={handleDeleteObra}
             onLoadDemo={handleLoadDemo}
             perfilAtivo={perfilAtivo}
-            onOpenSettings={() => setIsConfigOpen(true)}
+            onOpenSettings={Role === 'Construtor' ? () => setIsConfigOpen(true) : undefined}
           />
         ) : (
           /* Visão Interna: Detalhes da Obra com Abas e Timeline */
@@ -601,6 +805,9 @@ export const App: React.FC = () => {
             onBackToObras={handleBackToObras}
             onSwitchToClient={() => {
               setPerfilAtivo('cliente');
+              if (activeTab === 'etapas') {
+                setActiveTab('diario');
+              }
               showToast('Perfil alterado para Cliente', 'Agora você está navegando com a visão do cliente.', 'info');
             }}
             templates={templates}
@@ -613,6 +820,15 @@ export const App: React.FC = () => {
         isOpen={isCreateObraOpen}
         onClose={() => setIsCreateObraOpen(false)}
         onSubmit={handleCreateObra}
+      />
+
+      {/* Modal de Registro de Materiais */}
+      <ModalRegistroMaterial
+        isOpen={isRegistroMaterialOpen}
+        onClose={() => setIsRegistroMaterialOpen(false)}
+        obras={obras}
+        preselectedObraId={materialPreselectedObraId}
+        onSave={handleSaveMaterial}
       />
 
       {/* Notificações Toast Flutuantes */}
